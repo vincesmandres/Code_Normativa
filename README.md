@@ -69,7 +69,7 @@ S_a = \eta \cdot Z \cdot F_a \cdot \left( \frac{T_c}{T} \right)^r
 
 - Para \( T > T_L \)
 \[
-S_a = S_a(T_L)
+S_a = \eta \cdot Z \cdot F_a \cdot \left( \frac{T_c}{T} \right)^r
 \]
 
 ### **Espectro Inelástico \( S_i \)**
@@ -97,3 +97,4 @@ S_i = \frac{I \cdot S_a(T_a)}{R \cdot \Phi_P \cdot \Phi_E}
 
 ## 📞 Soporte
 Si tienes dudas o deseas agregar nuevas funcionalidades, ¡no dudes en ponerte en contacto! 😊
+
