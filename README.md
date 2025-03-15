@@ -20,9 +20,9 @@ Este script genera el **Espectro de Diseño Sísmico**, el **Espectro Elástico*
 - **Espectro Inelástico** (línea gris).
 
 ✅ Incluye el cálculo del **Espectro Reducido** mediante la fórmula:
-\[
-S_i = \frac{I \cdot S_a(T_a)}{R \cdot \Phi_P \cdot \Phi_E}
-\]
+```
+S_i = I * S_a(T_a) / (R * Φ_P * Φ_E)
+```
 
 ✅ Interfaz gráfica interactiva que permite seleccionar:
 - **Tipo de suelo** (A, B, C, D, E).
@@ -51,31 +51,31 @@ pip install numpy matplotlib tkinter
 
 ## ⚙️ Cálculos en el Espectro
 
-### **Espectro de Diseño \( S_a \)**
-- Para \( T \leq T_0 \)
-\[
-S_a = Z \cdot F_a \cdot \left( 1 + (\eta - 1) \frac{T}{T_0} \right)
-\]
+### **Espectro de Diseño (Sa)**
+- Para `T ≤ T0`
+```
+Sa = Z * Fa * [ 1 + (η - 1) * (T / T0) ]
+```
 
-- Para \( T_0 < T \leq T_c \)
-\[
-S_a = \eta \cdot Z \cdot F_a
-\]
+- Para `T0 < T ≤ Tc`
+```
+Sa = η * Z * Fa
+```
 
-- Para \( T_c < T \leq T_L \)
-\[
-S_a = \eta \cdot Z \cdot F_a \cdot \left( \frac{T_c}{T} \right)^r
-\]
+- Para `Tc < T ≤ TL`
+```
+Sa = η * Z * Fa * (Tc / T)^r
+```
 
-- Para \( T > T_L \)
-\[
-S_a = \eta \cdot Z \cdot F_a \cdot \left( \frac{T_c}{T} \right)^r
-\]
+- Para `T > TL`
+```
+Sa = η * Z * Fa * (Tc / T)^r
+```
 
-### **Espectro Inelástico \( S_i \)**
-\[
-S_i = \frac{I \cdot S_a(T_a)}{R \cdot \Phi_P \cdot \Phi_E}
-\]
+### **Espectro Inelástico (Si)**
+```
+Si = I * Sa(Ta) / (R * Φ_P * Φ_E)
+```
 
 ---
 
@@ -90,11 +90,10 @@ S_i = \frac{I \cdot S_a(T_a)}{R \cdot \Phi_P \cdot \Phi_E}
 ## 🛠️ Posibles Mejoras
 
 🔹 Agregar una opción para exportar el gráfico en formato **PDF** o **PNG**.  
-🔹 Incluir una tabla de resultados que muestre valores calculados de \( T_0 \), \( T_c \) y \( T_L \).  
+🔹 Incluir una tabla de resultados que muestre valores calculados de `T0`, `Tc` y `TL`.  
 🔹 Permitir al usuario seleccionar directamente los coeficientes **`R`**, **`I`**, **`Φ_P`** y **`Φ_E`**.  
 
 ---
 
 ## 📞 Soporte
 Si tienes dudas o deseas agregar nuevas funcionalidades, ¡no dudes en ponerte en contacto! 😊
-
