@@ -67,11 +67,11 @@ class EspectroSismicoApp:
         self.root.rowconfigure(0, weight=1)
         
         # Iniciar valores por defecto
-        self.zona_sismica_combo.set('III')
-        self.region_combo.set('Sierra')
+        self.zona_sismica_combo.set('VI')
+        self.region_combo.set('Costa (Excepto Esmeralda)')
         self.tipo_suelo_combo.set('C')
         self.r_combo.set('8.0 - Pórticos especiales sismo resistentes')
-        self.i_combo.set('1.5 - Edificaciones esenciales')
+        self.i_combo.set('1.0 - Edificaciones esenciales')
     
     def crear_interfaz(self):
         # Título
@@ -89,7 +89,7 @@ class EspectroSismicoApp:
         ttk.Label(self.panel_izquierdo, text="Región:", 
                   font=('Arial', 10, 'bold')).grid(column=0, row=2, sticky=tk.W, pady=5)
         self.region_combo = ttk.Combobox(self.panel_izquierdo, textvariable=self.region_var, width=30)
-        self.region_combo['values'] = ('Costa', 'Sierra', 'Oriente')
+        self.region_combo['values'] = ('Costa (Excepto Esmeralda)', 'Sierra, Esmeralda y Galapagos', 'Oriente')
         self.region_combo.grid(column=1, row=2, sticky=tk.W, pady=5)
         
         # Tipo de suelo
@@ -190,8 +190,8 @@ class EspectroSismicoApp:
         }
 
         eta_zona = {
-            'Costa': 1.8,
-            'Sierra': 2.48,
+            'Costa (Excepto Esmeralda)': 1.8,
+            'Sierra, Esmeralda y Galapagos': 2.48,
             'Oriente': 2.60
         }
 
@@ -212,12 +212,12 @@ class EspectroSismicoApp:
         Si = np.zeros_like(T)
 
         for i, t in enumerate(T):
-            if t <= T0:
+            if t == 0:
+                Sa[i] = Z*Fa
+            elif t <= T0:
                 Sa[i] = Z * Fa * (1 + (eta - 1) * t / T0)
             elif T0 < t <= Tc:
                 Sa[i] = eta * Z * Fa
-            elif Tc < t <= TL:
-                Sa[i] = eta * Z * Fa * (Tc / t)**r
             else:
                 Sa[i] = eta * Z * Fa * (Tc / t)**r 
 
