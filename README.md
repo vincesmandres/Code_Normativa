@@ -4,6 +4,21 @@ Este script genera el **Espectro de Diseño Sísmico**, el **Espectro Elástico*
 
 ---
 
+@'
+# Ejecución rápida (Windows)
+
+```powershell
+# 1) Crear y activar entorno
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+
+# 2) Instalar dependencias
+pip install -r requirements.txt
+
+# 3) Ejecutar la app
+python app.py   # o: python main.py
+"@
+
 ## 🚀 Funcionalidades
 
 ✅ Cálculo automático de los factores:
