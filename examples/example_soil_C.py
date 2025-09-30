@@ -2,9 +2,9 @@
 # This script demonstrates how to use the seismic calculation library
 # to compute parameters and spectrum for a specific soil type
 
-import seismic_calculations
+from espectro_nec import seismic_calculations
 import matplotlib.pyplot as plt
-import export_utilities
+from espectro_nec import export_utilities
 
 # Set fixed parameters for soil type C
 tipo_suelo = 'C'  # Soil type C

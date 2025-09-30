@@ -1,6 +1,6 @@
 import tkinter as tk
 from tkinter import ttk
-from constants import (ZONA_SISMICA_OPTIONS, REGION_OPTIONS, TIPO_SUELO_OPTIONS, 
+from .constants import (ZONA_SISMICA_OPTIONS, REGION_OPTIONS, TIPO_SUELO_OPTIONS,
                       FACTOR_R_OPTIONS, FACTOR_I_OPTIONS)
 
 def create_input_panel(panel, variables, generar_callback, exportar_callback, imagen_callback, pdf_callback):

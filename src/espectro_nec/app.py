@@ -3,9 +3,9 @@ from tkinter import ttk
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
 
-from ui_components import create_input_panel
-from seismic_calculations import parse_values, calculate_parameters, calculate_spectrum
-from export_utilities import export_to_excel, save_image, generate_pdf_report
+from .ui_components import create_input_panel
+from .seismic_calculations import parse_values, calculate_parameters, calculate_spectrum
+from .export_utilities import export_to_excel, save_image, generate_pdf_report
 
 class EspectroSismicoApp:
     def __init__(self, root):

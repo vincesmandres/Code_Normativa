@@ -97,7 +97,7 @@ def generate_pdf_report(T, Sa, Se, Si, zona_sismica, tipo_suelo, region, r_valor
             return
         
         # Calcular los parámetros para el reporte
-        from seismic_calculations import calculate_parameters
+        from .seismic_calculations import calculate_parameters
         parametros, eta, Z = calculate_parameters(tipo_suelo, zona_sismica, region)
         Fa, Fd, Fs, r = parametros['Fa'], parametros['Fd'], parametros['Fs'], parametros['r']
         

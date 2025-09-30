@@ -1,5 +1,5 @@
 import tkinter as tk
-from app import EspectroSismicoApp
+from .app import EspectroSismicoApp
 
 def main():
     root = tk.Tk()

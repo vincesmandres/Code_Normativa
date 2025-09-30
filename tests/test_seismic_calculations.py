@@ -1,5 +1,5 @@
 import pytest
-from seismic_calculations import parse_values, calculate_parameters, calculate_spectrum
+from espectro_nec.seismic_calculations import parse_values, calculate_parameters, calculate_spectrum
 
 def test_parse_values():
     class MockVar:

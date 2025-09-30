@@ -5,7 +5,7 @@ description = "Seismic spectrum calculator according to Ecuadorian seismic code 
 authors = [{name = "Developer", email = "dev@example.com"}]
 dependencies = ["numpy>=1.26,<3.0", "matplotlib>=3.8,<3.10"]
 readme = "README.md"
-license = {text = "MIT"}
+license = "MIT"
 
 [build-system]
 requires = ["setuptools>=61.0", "wheel"]
@@ -13,3 +13,7 @@ build-backend = "setuptools.build_meta"
 
 [project.optional-dependencies]
 dev = ["pytest", "pyinstaller"]
+
+[tool.setuptools.packages.find]
+include = ["espectro_nec*"]
+from = "src"
