@@ -19,7 +19,7 @@ def test_parse_values():
     assert result == ('I', 'A', 'Costa', 3.0, 1.5)
 
 def test_calculate_parameters():
-    params, eta, Z = calculate_parameters('A', 'I', 'Costa')
+    params, eta, Z = calculate_parameters('A', 'I', 'Costa (Excepto Esmeralda)')
     assert params['Fa'] == 0.9
     assert params['Fd'] == 0.9
     assert params['Fs'] == 0.75
