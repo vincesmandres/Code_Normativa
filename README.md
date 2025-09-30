@@ -1,4 +1,5 @@
 # Generador de Espectro Sísmico
+![Build Status](https://github.com/vincesmandres/Code_Normativa/actions/workflows/ci.yml/badge.svg) ![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)
 
 Este script genera el **Espectro de Diseño Sísmico**, el **Espectro Elástico** y el **Espectro Inelástico** mediante una interfaz gráfica interactiva basada en **Tkinter**.
 
