@@ -3,7 +3,7 @@ name = "espectro-nec"
 version = "0.1.0"
 description = "Seismic spectrum calculator according to Ecuadorian seismic code (NEC)"
 authors = [{name = "Developer", email = "dev@example.com"}]
-dependencies = ["numpy>=1.26,<3.0", "matplotlib>=3.8,<3.10"]
+dependencies = ["numpy>=1.26,<3.0", "matplotlib>=3.8,<3.10", "pandas>=1.5,<3.0", "openpyxl>=3.0,<4.0", "reportlab>=3.6,<5.0"]
 readme = "README.md"
 license = "MIT"
 
