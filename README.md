@@ -113,3 +113,56 @@ Si = I * Sa(Ta) / (R * Φ_P * Φ_E)
 
 ## 📞 Soporte
 Si tienes dudas o deseas agregar nuevas funcionalidades, ¡no dudes en ponerte en contacto! 😊
+# Quick start (Windows)
+
+```powershell
+# Option A: one command (installs deps if missing)
+python run_app.py
+
+# Option B: explicit steps
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install -r requirements.txt
+python -m espectro_nec.main
+```
+
+# Build EXE (Windows)
+
+```powershell
+# Option A: use the helper script
+.\build_exe.ps1
+
+# Option B: manual
+python -m pip install -r requirements.txt
+python -m pip install -r requirements-build.txt
+pyinstaller --noconfirm --clean --windowed --name EspectroNEC --paths .\src .\run_app.py
+```
+
+The EXE will be at `dist\EspectroNEC\EspectroNEC.exe`.
+# Quick start (Windows)
+
+```powershell
+# One-file EXE (build once, then copy dist\NEC15_app.exe to any PC)
+.\build_exe.ps1
+
+# Install in a venv (if you want a Python install)
+.\install.ps1
+```
+## Supported Python
+
+- Python 3.10, 3.11, 3.12
+- For other versions, use the EXE build
+
+## Quick start (Windows)
+
+```powershell
+# Use a supported Python
+py -3.11 .\run_app.py
+```
+
+## Build EXE (Windows)
+
+```powershell
+# One-file EXE (build once, then copy dist\NEC15_app.exe to any PC)
+.\build_exe.ps1
+```
