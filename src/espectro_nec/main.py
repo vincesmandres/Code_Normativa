@@ -1,8 +1,8 @@
-import tkinter as tk
+import ttkbootstrap as ttk
 from .app import EspectroSismicoApp
 
 def main():
-    root = tk.Tk()
+    root = ttk.Window(themename="litera")
     app = EspectroSismicoApp(root)
     root.mainloop()
 
