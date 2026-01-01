@@ -10,6 +10,7 @@ def _has_runtime_deps():
         import pandas  # noqa: F401
         import openpyxl  # noqa: F401
         import reportlab  # noqa: F401
+        import ttkbootstrap  # noqa: F401
         return True
     except (ImportError, ModuleNotFoundError):
         return False
