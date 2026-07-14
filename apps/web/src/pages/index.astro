@@ -1,0 +1,317 @@
+---
+import "../styles/global.css";
+import {
+  importanceFactors,
+  regions,
+  rFactors,
+  seismicZones,
+  soilTypes,
+} from "../lib/nec-engine";
+---
+
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Calculadora web de espectro de diseno sismico NEC." />
+    <title>CodeNormative | Espectro NEC</title>
+  </head>
+  <body>
+    <main class="app-shell">
+      <aside class="sidebar" aria-label="Parametros de calculo">
+        <div class="brand">
+          <span class="brand-mark">CN</span>
+          <div>
+            <p>CodeNormative</p>
+            <span>Calculadora NEC MVP</span>
+          </div>
+        </div>
+
+        <form id="spectrum-form" class="form-grid">
+          <label>
+            Zona sismica
+            <select name="zone">
+              {seismicZones.map((zone) => <option value={zone.value} selected={zone.value === "VI"}>{zone.label}</option>)}
+            </select>
+          </label>
+
+          <label>
+            Region
+            <select name="region">
+              {regions.map((region) => <option value={region} selected={region === "Costa (Excepto Esmeralda)"}>{region}</option>)}
+            </select>
+          </label>
+
+          <label>
+            Tipo de suelo
+            <select name="soil">
+              {soilTypes.map((soil) => <option value={soil.value} selected={soil.value === "C"}>{soil.label}</option>)}
+            </select>
+          </label>
+
+          <label>
+            Factor R
+            <select name="rFactor">
+              {rFactors.map((factor) => <option value={factor.value} selected={factor.value === 8}>{factor.label}</option>)}
+            </select>
+          </label>
+
+          <label>
+            Factor I
+            <select name="importance">
+              {importanceFactors.map((factor) => <option value={factor.value} selected={factor.value === 1}>{factor.label}</option>)}
+            </select>
+          </label>
+
+          <div class="numeric-row">
+            <label>
+              phiP
+              <input name="phiP" type="number" min="0.01" step="0.01" value="0.9" />
+            </label>
+            <label>
+              phiE
+              <input name="phiE" type="number" min="0.01" step="0.01" value="0.9" />
+            </label>
+          </div>
+
+          <div class="actions">
+            <button type="submit">Calcular</button>
+            <button type="button" id="download-csv" class="secondary">CSV</button>
+            <button type="button" id="download-etabs" class="secondary">ETABS</button>
+          </div>
+        </form>
+      </aside>
+
+      <section class="workspace" aria-label="Resultados del espectro">
+        <header class="topbar">
+          <div>
+            <p class="eyebrow">Espectro de diseno sismico</p>
+            <h1>Analisis NEC interactivo</h1>
+          </div>
+          <div class="status-pill" id="status-pill">Listo</div>
+        </header>
+
+        <section class="metrics" aria-label="Parametros calculados">
+          <article>
+            <span>Z</span>
+            <strong id="metric-z">-</strong>
+          </article>
+          <article>
+            <span>eta</span>
+            <strong id="metric-eta">-</strong>
+          </article>
+          <article>
+            <span>Fa / Fd / Fs</span>
+            <strong id="metric-soil">-</strong>
+          </article>
+          <article>
+            <span>T0 / Tc / TL</span>
+            <strong id="metric-periods">-</strong>
+          </article>
+        </section>
+
+        <section class="chart-panel">
+          <div class="chart-head">
+            <div>
+              <h2>Curvas Sa y Si</h2>
+              <p>Periodo T en segundos contra aceleracion en g.</p>
+            </div>
+            <div class="legend">
+              <span><i class="sa"></i> Sa elastico</span>
+              <span><i class="si"></i> Si inelastico</span>
+            </div>
+          </div>
+          <svg id="spectrum-chart" role="img" aria-label="Grafico del espectro NEC"></svg>
+        </section>
+
+        <section class="table-panel">
+          <div class="table-head">
+            <h2>Muestra de datos</h2>
+            <p id="row-count">0 puntos calculados</p>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Periodo (s)</th>
+                  <th>Sa (g)</th>
+                  <th>Se (g)</th>
+                  <th>Si (g)</th>
+                </tr>
+              </thead>
+              <tbody id="spectrum-table"></tbody>
+            </table>
+          </div>
+        </section>
+      </section>
+    </main>
+
+    <script>
+      import { calculateSpectrum } from "../lib/nec-engine";
+      import type { SpectrumInput, SpectrumPoint, SpectrumResult } from "../lib/nec-engine";
+
+      function requireElement<T extends Element>(selector: string): T {
+        const element = document.querySelector<T>(selector);
+        if (!element) {
+          throw new Error(`No se encontro el elemento ${selector}.`);
+        }
+        return element;
+      }
+
+      const form = requireElement<HTMLFormElement>("#spectrum-form");
+      const chart = requireElement<SVGSVGElement>("#spectrum-chart");
+      const table = requireElement<HTMLTableSectionElement>("#spectrum-table");
+      const rowCount = requireElement<HTMLElement>("#row-count");
+      const statusPill = requireElement<HTMLElement>("#status-pill");
+      const downloadCsv = requireElement<HTMLButtonElement>("#download-csv");
+      const downloadEtabs = requireElement<HTMLButtonElement>("#download-etabs");
+      let currentResult: SpectrumResult | null = null;
+
+      function formValue(data: FormData, key: keyof SpectrumInput): string {
+        const value = data.get(key);
+        if (typeof value !== "string") {
+          throw new Error(`Parametro invalido: ${key}.`);
+        }
+        return value;
+      }
+
+      function readInput(): SpectrumInput {
+        const data = new FormData(form);
+        return {
+          zone: formValue(data, "zone") as SpectrumInput["zone"],
+          region: formValue(data, "region") as SpectrumInput["region"],
+          soil: formValue(data, "soil") as SpectrumInput["soil"],
+          rFactor: Number(formValue(data, "rFactor")),
+          importance: Number(formValue(data, "importance")),
+          phiP: Number(formValue(data, "phiP")),
+          phiE: Number(formValue(data, "phiE")),
+        };
+      }
+
+      function fmt(value: number, digits = 3): string {
+        return Number(value).toFixed(digits);
+      }
+
+      function setText(selector: string, value: string): void {
+        const node = document.querySelector<HTMLElement>(selector);
+        if (node) node.textContent = value;
+      }
+
+      function toPath(
+        points: SpectrumPoint[],
+        key: "sa" | "si",
+        xScale: (period: number) => number,
+        yScale: (value: number) => number,
+      ): string {
+        return points
+          .map((point, index) => `${index === 0 ? "M" : "L"} ${xScale(point.period).toFixed(2)} ${yScale(point[key]).toFixed(2)}`)
+          .join(" ");
+      }
+
+      function drawChart(result: SpectrumResult): void {
+        const width = 920;
+        const height = 430;
+        const pad = { top: 24, right: 28, bottom: 44, left: 58 };
+        const innerWidth = width - pad.left - pad.right;
+        const innerHeight = height - pad.top - pad.bottom;
+        const maxY = Math.max(...result.points.map((point) => Math.max(point.sa, point.si))) * 1.08;
+        const xScale = (period: number) => pad.left + (period / 6) * innerWidth;
+        const yScale = (value: number) => pad.top + innerHeight - (value / maxY) * innerHeight;
+        const yTicks = [0, maxY * 0.25, maxY * 0.5, maxY * 0.75, maxY];
+        const xTicks = [0, 1, 2, 3, 4, 5, 6];
+        const periodLines = [
+          { label: "T0", value: result.t0 },
+          { label: "Tc", value: result.tc },
+          { label: "TL", value: result.tl },
+        ];
+
+        chart.setAttribute("viewBox", `0 0 ${width} ${height}`);
+        chart.innerHTML = `
+          <rect class="plot-bg" x="${pad.left}" y="${pad.top}" width="${innerWidth}" height="${innerHeight}" rx="6"></rect>
+          ${yTicks.map((tick) => `
+            <line class="grid-line" x1="${pad.left}" x2="${width - pad.right}" y1="${yScale(tick)}" y2="${yScale(tick)}"></line>
+            <text class="axis-label" x="${pad.left - 12}" y="${yScale(tick) + 4}" text-anchor="end">${fmt(tick, 2)}</text>
+          `).join("")}
+          ${xTicks.map((tick) => `
+            <line class="grid-line" x1="${xScale(tick)}" x2="${xScale(tick)}" y1="${pad.top}" y2="${height - pad.bottom}"></line>
+            <text class="axis-label" x="${xScale(tick)}" y="${height - 16}" text-anchor="middle">${tick}</text>
+          `).join("")}
+          ${periodLines.map((line) => `
+            <line class="period-line" x1="${xScale(line.value)}" x2="${xScale(line.value)}" y1="${pad.top}" y2="${height - pad.bottom}"></line>
+            <text class="period-label" x="${xScale(line.value) + 5}" y="${pad.top + 16}">${line.label}</text>
+          `).join("")}
+          <path class="curve sa-curve" d="${toPath(result.points, "sa", xScale, yScale)}"></path>
+          <path class="curve si-curve" d="${toPath(result.points, "si", xScale, yScale)}"></path>
+          <text class="axis-title" x="${width / 2}" y="${height - 2}" text-anchor="middle">Periodo T (s)</text>
+          <text class="axis-title" transform="translate(16 ${height / 2}) rotate(-90)" text-anchor="middle">Aceleracion (g)</text>
+        `;
+      }
+
+      function drawTable(result: SpectrumResult): void {
+        const step = Math.max(1, Math.floor(result.points.length / 14));
+        table.innerHTML = result.points
+          .filter((_, index) => index % step === 0)
+          .slice(0, 16)
+          .map((point) => `
+            <tr>
+              <td>${fmt(point.period)}</td>
+              <td>${fmt(point.sa, 4)}</td>
+              <td>${fmt(point.se, 4)}</td>
+              <td>${fmt(point.si, 4)}</td>
+            </tr>
+          `)
+          .join("");
+        rowCount.textContent = `${result.points.length} puntos calculados`;
+      }
+
+      function updateResult(): void {
+        try {
+          currentResult = calculateSpectrum(readInput());
+          setText("#metric-z", `${fmt(currentResult.z, 2)}g`);
+          setText("#metric-eta", fmt(currentResult.eta, 2));
+          setText("#metric-soil", `${fmt(currentResult.fa, 2)} / ${fmt(currentResult.fd, 2)} / ${fmt(currentResult.fs, 2)}`);
+          setText("#metric-periods", `${fmt(currentResult.t0)} / ${fmt(currentResult.tc)} / ${fmt(currentResult.tl)}`);
+          drawChart(currentResult);
+          drawTable(currentResult);
+          statusPill.textContent = "Calculado";
+          statusPill.classList.remove("error");
+        } catch (error) {
+          statusPill.textContent = error instanceof Error ? error.message : "Error";
+          statusPill.classList.add("error");
+        }
+      }
+
+      function download(filename: string, content: string, type: string): void {
+        const blob = new Blob([content], { type });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = filename;
+        link.click();
+        URL.revokeObjectURL(url);
+      }
+
+      function asCsv(result: SpectrumResult): string {
+        const rows = ["Periodo (s),Sa (g),Se (g),Si (g)"];
+        result.points.forEach((point) => rows.push(`${fmt(point.period)},${fmt(point.sa, 6)},${fmt(point.se, 6)},${fmt(point.si, 6)}`));
+        return rows.join("\n");
+      }
+
+      function asEtabs(result: SpectrumResult): string {
+        return ["Espectro Sismico", ...result.points.map((point) => `${fmt(point.period, 4)}    ${fmt(point.si, 4)}`)].join("\n");
+      }
+
+      form.addEventListener("submit", (event) => {
+        event.preventDefault();
+        updateResult();
+      });
+      form.addEventListener("change", updateResult);
+      form.addEventListener("input", updateResult);
+      downloadCsv.addEventListener("click", () => currentResult && download("espectro-nec.csv", asCsv(currentResult), "text/csv"));
+      downloadEtabs.addEventListener("click", () => currentResult && download("espectro-etabs.txt", asEtabs(currentResult), "text/plain"));
+
+      updateResult();
+    </script>
+  </body>
+</html>

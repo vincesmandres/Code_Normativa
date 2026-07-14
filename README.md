@@ -114,6 +114,38 @@ La migracion recomendada es convertir CodeNormative en una plataforma web tecnic
 
 ## Roadmap de migracion a web
 
+### MVP actual: Astro estatico
+
+Ya existe una primera version web en `apps/web`.
+
+Incluye:
+
+- Calculadora NEC en navegador.
+- Motor de calculo migrado a TypeScript.
+- Grafico SVG interactivo generado en cliente.
+- Tabla de muestra con 1000 puntos calculados.
+- Descarga de CSV.
+- Descarga de archivo `.txt` para ETABS.
+- Build estatico listo para Vercel.
+
+Ejecutar el MVP:
+
+```powershell
+cd apps\web
+npm.cmd install
+$env:ASTRO_TELEMETRY_DISABLED='1'; npm.cmd run build
+$env:ASTRO_TELEMETRY_DISABLED='1'; npm.cmd run preview
+```
+
+Para Vercel:
+
+- Root Directory: `apps/web`
+- Build Command: `npm run build`
+- Output Directory: `dist`
+- Framework Preset: Astro
+
+Supabase no se usa en este MVP. Se recomienda agregarlo solo cuando se necesite guardar usuarios, proyectos, historial de calculos o reportes generados.
+
 ### Fase 1: Separar el motor de calculo
 
 Objetivo: dejar la logica normativa independiente de Tkinter.

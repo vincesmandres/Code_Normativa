@@ -7,3 +7,6 @@ dist/
 build/
 *.spec
 *.egg-info/
+.astro/
+node_modules/
+.vercel/
