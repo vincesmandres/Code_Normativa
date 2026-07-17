@@ -72,8 +72,40 @@ import "../styles/global.css";
         <header class="topbar"><div><p class="eyebrow">NEC-15 / NEC-SE-GC</p><h1>Estudio de suelos</h1></div><div class="status-pill" id="soil-status">Por evaluar</div></header>
         <p class="review-notice">Predimensionamiento y control de completitud. La clasificación final del perfil, los parámetros resistentes y las recomendaciones de cimentación corresponden al ingeniero geotécnico responsable.</p>
 
+        <section class="result-window boring-data-panel">
+          <div class="window-bar"><span class="window-index">01</span><div><h2>Datos base de la perforacion</h2><p>Identificacion, localizacion y condiciones de ejecución</p></div></div>
+          <div class="boring-base-grid">
+            <label>Proyecto<input name="projectName" form="soil-form" value="Edificio residencial" /></label>
+            <label>Cliente<input name="client" form="soil-form" value="Propietario" /></label>
+            <label>Ubicacion<input name="location" form="soil-form" placeholder="Ciudad, parroquia, direccion" /></label>
+            <label>Perforacion<input name="boringId" form="soil-form" value="S-01" /></label>
+            <label>Coordenada Este<input name="coordE" form="soil-form" placeholder="m E" /></label>
+            <label>Coordenada Norte<input name="coordN" form="soil-form" placeholder="m N" /></label>
+            <label>Cota terreno (m)<input name="elevation" form="soil-form" type="number" step="0.01" value="0" /></label>
+            <label>Fecha<input name="boringDate" form="soil-form" type="date" /></label>
+            <label>Metodo<select name="method" form="soil-form"><option>SPT con perforacion a percusion</option><option>Rotacion con recuperacion de nucleo</option><option>CPT / CPTu</option><option>Calicata</option></select></label>
+            <label>Perforista / laboratorio<input name="operator" form="soil-form" placeholder="Empresa o responsable" /></label>
+            <label>Nivel freatico (m)<input name="waterDepth" form="soil-form" type="number" min="0" step="0.1" placeholder="No observado" /></label>
+            <label>Profundidad final (m)<input name="boringFinalDepth" form="soil-form" type="number" min="0.1" step="0.1" value="6" /></label>
+          </div>
+        </section>
+
+        <section class="result-window boring-log-panel">
+          <div class="window-bar boring-log-bar"><span class="window-index">02</span><div><h2>Registro estratigrafico y SPT</h2><p>N-SPT = segundo tramo + tercer tramo de penetracion</p></div><div class="actions"><button type="button" id="add-layer" class="secondary">+ Estrato</button><button type="button" id="save-boring" class="secondary">Guardar borrador</button><button type="button" id="print-boring">Generar reporte</button></div></div>
+          <div class="boring-editor">
+            <div id="bore-profile" class="bore-profile" aria-label="Columna estratigrafica"></div>
+            <div class="boring-table-wrap">
+              <table class="boring-table">
+                <thead><tr><th>Desde<br />m</th><th>Hasta<br />m</th><th>Descripcion del material</th><th>USCS</th><th>Muestra</th><th>SPT<br />0-15</th><th>SPT<br />15-30</th><th>SPT<br />30-45</th><th>N</th><th>Humedad<br />%</th><th></th></tr></thead>
+                <tbody id="layer-rows"></tbody>
+              </table>
+            </div>
+          </div>
+          <div class="boring-observations"><label>Observaciones de campo<textarea name="fieldNotes" form="soil-form" rows="3" placeholder="Perdida de circulacion, rechazo, cambios de color, olor, cementacion, nivel de agua..."></textarea></label></div>
+        </section>
+
         <section class="result-window">
-          <div class="window-bar"><span class="window-index">01</span><div><h2>Alcance mínimo de exploración</h2><p>NEC-SE-GC tablas 1, 2 y 3</p></div></div>
+          <div class="window-bar"><span class="window-index">03</span><div><h2>Alcance mínimo de exploración</h2><p>NEC-SE-GC tablas 1, 2 y 3</p></div></div>
           <div class="review-metrics soil-metrics">
             <article><span>Categoria</span><strong id="soil-category">-</strong><small id="category-basis">-</small></article>
             <article><span>Sondeos mínimos</span><strong id="required-borings">-</strong><small>Por unidad de construccion</small></article>
@@ -84,7 +116,7 @@ import "../styles/global.css";
 
         <section class="soil-grid">
           <section class="result-window capacity-panel">
-            <div class="window-bar"><span class="window-index">02</span><div><h2>Capacidad y servicio</h2><p>Comparacion de presión, capacidad admisible y asentamiento</p></div></div>
+            <div class="window-bar"><span class="window-index">04</span><div><h2>Capacidad y servicio</h2><p>Comparacion de presión, capacidad admisible y asentamiento</p></div></div>
             <div class="capacity-visual">
               <div class="capacity-numbers"><div><span>Presion aplicada</span><strong id="applied-pressure">-</strong></div><div><span>q admisible</span><strong id="allowable-capacity">-</strong></div><div><span>Utilizacion</span><strong id="capacity-use">-</strong></div></div>
               <div class="capacity-track" aria-label="Utilizacion de capacidad portante"><span id="capacity-bar"></span></div>
@@ -99,13 +131,13 @@ import "../styles/global.css";
           </section>
 
           <section class="result-window findings-panel">
-            <div class="window-bar"><span class="window-index">03</span><div><h2>Control del estudio</h2><p id="soil-summary">Complete los datos.</p></div></div>
+            <div class="window-bar"><span class="window-index">05</span><div><h2>Control del estudio</h2><p id="soil-summary">Complete los datos.</p></div></div>
             <div id="soil-findings" class="findings" aria-live="polite"></div>
           </section>
         </section>
 
         <section class="result-window">
-          <div class="window-bar"><span class="window-index">04</span><div><h2>Contenido del informe</h2><p>Lista de entrega para revisión del expediente geotécnico</p></div></div>
+          <div class="window-bar"><span class="window-index">06</span><div><h2>Contenido del informe</h2><p>Lista de entrega para revisión del expediente geotécnico</p></div></div>
           <div class="report-checklist">
             <label><input type="checkbox" name="locationPlans" form="soil-form" /> Planos de localizacion y ubicación de trabajos de campo</label>
             <label><input type="checkbox" name="logs" form="soil-form" /> Registros de perforacion y ensayos de campo/laboratorio</label>
@@ -120,6 +152,8 @@ import "../styles/global.css";
 
     <script>
       const form = document.querySelector<HTMLFormElement>("#soil-form")!;
+      const layerRows = document.querySelector<HTMLTableSectionElement>("#layer-rows")!;
+      const boreProfile = document.querySelector<HTMLElement>("#bore-profile")!;
       const n = (data: FormData, key: string) => Number(data.get(key));
       const s = (data: FormData, key: string) => String(data.get(key));
       const set = (selector: string, value: string) => { const node = document.querySelector(selector); if (node) node.textContent = value; };
@@ -130,6 +164,58 @@ import "../styles/global.css";
         { name: "Alta", borings: 4, depth: 25 },
         { name: "Especial", borings: 5, depth: 30 },
       ];
+
+      type Layer = { from: number; to: number; description: string; uscs: string; sample: string; n1: number; n2: number; n3: number; moisture: number };
+      const colors: Record<string, string> = { GW: "#bca77c", GP: "#c9b58c", GM: "#ab9b78", GC: "#98896c", SW: "#dfc78f", SP: "#ead7a9", SM: "#c9ad79", SC: "#b9956c", ML: "#b9ad8d", CL: "#9fae9b", OL: "#7d8c78", MH: "#a4a0b3", CH: "#82958a", OH: "#6e7768", PT: "#4c463b" };
+      let layers: Layer[] = [
+        { from: 0, to: 0.5, description: "Relleno arenoso con grava", uscs: "SM", sample: "M-01", n1: 3, n2: 4, n3: 5, moisture: 12 },
+        { from: 0.5, to: 3, description: "Arena limosa medianamente densa", uscs: "SM", sample: "SPT-01", n1: 5, n2: 7, n3: 8, moisture: 18 },
+        { from: 3, to: 6, description: "Arcilla de baja plasticidad, firme", uscs: "CL", sample: "SPT-02", n1: 6, n2: 9, n3: 10, moisture: 26 },
+      ];
+
+      const escapeHtml = (value: unknown) => String(value ?? "").replace(/[&<>'"]/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;" })[char]!);
+
+      function renderLayers() {
+        layerRows.innerHTML = layers.map((layer, index) => `<tr data-index="${index}">
+          <td><input data-key="from" type="number" min="0" step="0.1" value="${layer.from}"></td>
+          <td><input data-key="to" type="number" min="0" step="0.1" value="${layer.to}"></td>
+          <td><input data-key="description" value="${escapeHtml(layer.description)}"></td>
+          <td><select data-key="uscs">${["GW","GP","GM","GC","SW","SP","SM","SC","ML","CL","OL","MH","CH","OH","PT"].map((code) => `<option ${code === layer.uscs ? "selected" : ""}>${code}</option>`).join("")}</select></td>
+          <td><input data-key="sample" value="${escapeHtml(layer.sample)}"></td>
+          <td><input data-key="n1" type="number" min="0" value="${layer.n1}"></td>
+          <td><input data-key="n2" type="number" min="0" value="${layer.n2}"></td>
+          <td><input data-key="n3" type="number" min="0" value="${layer.n3}"></td>
+          <td class="n-value">${layer.n2 + layer.n3}</td>
+          <td><input data-key="moisture" type="number" min="0" step="0.1" value="${layer.moisture}"></td>
+          <td><button type="button" class="remove-layer" aria-label="Eliminar estrato">×</button></td>
+        </tr>`).join("");
+        renderProfile();
+      }
+
+      function renderProfile() {
+        const finalDepth = Math.max(Number(new FormData(form).get("boringFinalDepth")) || 1, ...layers.map((layer) => layer.to));
+        boreProfile.innerHTML = `<div class="profile-scale">${Array.from({ length: Math.ceil(finalDepth) + 1 }, (_, depth) => `<span style="top:${depth / finalDepth * 100}%">${depth} m</span>`).join("")}</div><div class="profile-column">${layers.map((layer) => `<div class="profile-layer" style="top:${layer.from / finalDepth * 100}%;height:${Math.max((layer.to - layer.from) / finalDepth * 100, 2)}%;background:${colors[layer.uscs] || "#aaa"}"><strong>${escapeHtml(layer.uscs)}</strong><span>${escapeHtml(layer.description)}</span></div>`).join("")}</div>`;
+      }
+
+      function syncLayers(event: Event) {
+        const target = event.target as HTMLInputElement | HTMLSelectElement;
+        const row = target.closest<HTMLTableRowElement>("tr[data-index]");
+        if (!row || !target.dataset.key) return;
+        const index = Number(row.dataset.index);
+        const key = target.dataset.key as keyof Layer;
+        (layers[index] as any)[key] = ["description", "uscs", "sample"].includes(key) ? target.value : Number(target.value);
+        row.querySelector(".n-value")!.textContent = String(layers[index].n2 + layers[index].n3);
+        renderProfile();
+      }
+
+      function reportHtml() {
+        const data = new FormData(form);
+        const value = (key: string) => escapeHtml(data.get(key) || "-");
+        const maxDepth = Math.max(Number(data.get("boringFinalDepth")) || 1, ...layers.map((layer) => layer.to));
+        const profile = layers.map((layer) => `<div class="r-layer" style="height:${Math.max((layer.to-layer.from)/maxDepth*620,28)}px;background:${colors[layer.uscs] || "#aaa"}"><b>${escapeHtml(layer.uscs)}</b><span>${escapeHtml(layer.description)}</span></div>`).join("");
+        const rows = layers.map((layer) => `<tr><td>${layer.from.toFixed(2)}</td><td>${layer.to.toFixed(2)}</td><td>${escapeHtml(layer.description)}</td><td>${escapeHtml(layer.uscs)}</td><td>${escapeHtml(layer.sample)}</td><td>${layer.n1}</td><td>${layer.n2}</td><td>${layer.n3}</td><td><b>${layer.n2 + layer.n3}</b></td><td>${layer.moisture.toFixed(1)}</td></tr>`).join("");
+        return `<!doctype html><html><head><meta charset="utf-8"><title>Reporte ${value("boringId")}</title><style>@page{size:A4;margin:12mm}*{box-sizing:border-box}body{font:10px Arial;color:#1d211e;margin:0}h1{font-size:20px;margin:0 0 3px}.head{display:flex;justify-content:space-between;border-bottom:3px solid #374b40;padding-bottom:8px}.tag{font-weight:bold;color:#52665a}.meta{display:grid;grid-template-columns:repeat(4,1fr);border:1px solid #999;margin:10px 0}.meta div{padding:6px;border-right:1px solid #bbb;border-bottom:1px solid #bbb}.meta span{display:block;color:#666;font-size:8px;margin-bottom:2px}.log{display:grid;grid-template-columns:150px 1fr;gap:10px;align-items:start}.profile{position:relative;border:1px solid #777;min-height:620px}.r-layer{border-bottom:1px solid #555;padding:5px;overflow:hidden;display:flex;flex-direction:column}.r-layer span{font-size:8px;margin-top:3px}table{width:100%;border-collapse:collapse}th,td{border:1px solid #999;padding:4px;text-align:center}th{background:#e8e8e3;font-size:8px}td:nth-child(3){text-align:left}.notes{border:1px solid #999;padding:7px;margin-top:10px;min-height:45px}.foot{display:flex;justify-content:space-between;margin-top:14px;border-top:1px solid #999;padding-top:7px;color:#555}.sign{margin-top:45px;display:grid;grid-template-columns:1fr 1fr;gap:80px}.sign div{border-top:1px solid #333;text-align:center;padding-top:5px}</style></head><body><div class="head"><div><span class="tag">CODENORMATIVE · NEC-SE-GC</span><h1>REPORTE DE PERFORACION</h1><div>${value("projectName")} · ${value("boringId")}</div></div><div>Fecha: ${value("boringDate")}</div></div><div class="meta"><div><span>CLIENTE</span>${value("client")}</div><div><span>UBICACION</span>${value("location")}</div><div><span>COORD. E / N</span>${value("coordE")} / ${value("coordN")}</div><div><span>COTA TERRENO</span>${value("elevation")} m</div><div><span>METODO</span>${value("method")}</div><div><span>RESPONSABLE</span>${value("operator")}</div><div><span>NIVEL FREATICO</span>${value("waterDepth")} m</div><div><span>PROFUNDIDAD FINAL</span>${value("boringFinalDepth")} m</div></div><div class="log"><div class="profile">${profile}</div><table><thead><tr><th>Desde m</th><th>Hasta m</th><th>Descripción</th><th>USCS</th><th>Muestra</th><th>0-15</th><th>15-30</th><th>30-45</th><th>N-SPT</th><th>w %</th></tr></thead><tbody>${rows}</tbody></table></div><div class="notes"><b>OBSERVACIONES DE CAMPO</b><br>${value("fieldNotes")}</div><div class="sign"><div>Elaborado por</div><div>Ingeniero geotecnico responsable</div></div><div class="foot"><span>Registro generado con CodeNormative</span><span>Documento de campo sujeto a revisión y firma profesional</span></div><script>window.onload=()=>window.print()<\/script></body></html>`;
+      }
 
       function categoryIndex(floors: number, load: number) {
         const floorIndex = floors <= 3 ? 0 : floors <= 10 ? 1 : floors <= 20 ? 2 : 3;
@@ -215,6 +301,15 @@ import "../styles/global.css";
       form.addEventListener("submit", (event) => { event.preventDefault(); update(); });
       form.addEventListener("input", update);
       form.addEventListener("change", update);
+      layerRows.addEventListener("input", syncLayers);
+      layerRows.addEventListener("change", syncLayers);
+      layerRows.addEventListener("click", (event) => { const button = (event.target as Element).closest(".remove-layer"); if (!button) return; const row = button.closest<HTMLTableRowElement>("tr[data-index]")!; if (layers.length > 1) layers.splice(Number(row.dataset.index), 1); renderLayers(); });
+      document.querySelector("#add-layer")!.addEventListener("click", () => { const from = layers.at(-1)?.to ?? 0; layers.push({ from, to: from + 1.5, description: "Nuevo estrato", uscs: "CL", sample: `M-${String(layers.length + 1).padStart(2,"0")}`, n1: 0, n2: 0, n3: 0, moisture: 0 }); renderLayers(); });
+      document.querySelector("#save-boring")!.addEventListener("click", () => { const payload = { form: Object.fromEntries(new FormData(form)), layers }; localStorage.setItem("codenormative-boring", JSON.stringify(payload)); const button = document.querySelector<HTMLButtonElement>("#save-boring")!; button.textContent = "Borrador guardado ✓"; setTimeout(() => button.textContent = "Guardar borrador", 1600); });
+      document.querySelector("#print-boring")!.addEventListener("click", () => { const url = URL.createObjectURL(new Blob([reportHtml()], { type: "text/html" })); window.open(url, "_blank"); setTimeout(() => URL.revokeObjectURL(url), 60000); });
+      const saved = localStorage.getItem("codenormative-boring");
+      if (saved) { try { const payload = JSON.parse(saved); Object.entries(payload.form || {}).forEach(([key, value]) => { const field = form.elements.namedItem(key) as HTMLInputElement | HTMLSelectElement | null; if (!field) return; if (field.type === "checkbox") (field as HTMLInputElement).checked = value === "on"; else field.value = String(value); }); if (Array.isArray(payload.layers) && payload.layers.length) layers = payload.layers; } catch {} }
+      renderLayers();
       update();
     </script>
   </body>
