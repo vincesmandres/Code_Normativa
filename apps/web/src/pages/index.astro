@@ -21,11 +21,16 @@ import {
     <main class="app-shell">
       <aside class="sidebar" aria-label="Parametros de calculo">
         <div class="brand">
-          <span class="brand-mark">CN</span>
+          <span class="brand-mark">C/N</span>
           <div>
             <p>CodeNormative</p>
-            <span>Calculadora NEC MVP</span>
+            <span>Espectro sismico · NEC</span>
           </div>
+        </div>
+
+        <div class="sidebar-intro">
+          <span>01 / Parametros</span>
+          <p>Configure el modelo. Los resultados se actualizan en el espacio de trabajo.</p>
         </div>
 
         <form id="spectrum-form" class="form-grid">
@@ -75,60 +80,58 @@ import {
             </label>
           </div>
 
-          <div class="actions">
-            <button type="submit">Calcular</button>
-            <button type="button" id="download-csv" class="secondary">CSV</button>
-            <button type="button" id="download-etabs" class="secondary">ETABS</button>
-          </div>
+          <button type="submit" class="calculate-button">Actualizar espectro <span>↗</span></button>
         </form>
+
+        <p class="sidebar-foot">NEC–SE–DS · Ecuador</p>
       </aside>
 
       <section class="workspace" aria-label="Resultados del espectro">
         <header class="topbar">
           <div>
-            <p class="eyebrow">Espectro de diseno sismico</p>
-            <h1>Analisis NEC interactivo</h1>
+            <p class="eyebrow">Code / Normative</p>
+            <h1>Espectro de diseño</h1>
           </div>
-          <div class="status-pill" id="status-pill">Listo</div>
+          <div class="topbar-meta">
+            <span>NEC–SE–DS</span>
+            <div class="status-pill" id="status-pill">Listo</div>
+          </div>
         </header>
 
-        <section class="metrics" aria-label="Parametros calculados">
-          <article>
-            <span>Z</span>
-            <strong id="metric-z">-</strong>
-          </article>
-          <article>
-            <span>eta</span>
-            <strong id="metric-eta">-</strong>
-          </article>
-          <article>
-            <span>Fa / Fd / Fs</span>
-            <strong id="metric-soil">-</strong>
-          </article>
-          <article>
-            <span>T0 / Tc / TL</span>
-            <strong id="metric-periods">-</strong>
-          </article>
-        </section>
-
-        <section class="chart-panel">
-          <div class="chart-head">
+        <section class="result-window chart-panel">
+          <div class="window-bar">
+            <span class="window-index">01</span>
             <div>
-              <h2>Curvas Sa y Si</h2>
-              <p>Periodo T en segundos contra aceleracion en g.</p>
+              <h2>Curvas de respuesta</h2>
+              <p>Periodo T (s) / Aceleracion (g)</p>
             </div>
             <div class="legend">
               <span><i class="sa"></i> Sa elastico</span>
-              <span><i class="si"></i> Si inelastico</span>
+              <span><i class="si"></i> Si reducido</span>
             </div>
           </div>
-          <svg id="spectrum-chart" role="img" aria-label="Grafico del espectro NEC"></svg>
+          <div class="chart-canvas">
+            <svg id="spectrum-chart" role="img" aria-label="Grafico del espectro NEC"></svg>
+          </div>
         </section>
 
-        <section class="table-panel">
-          <div class="table-head">
-            <h2>Muestra de datos</h2>
-            <p id="row-count">0 puntos calculados</p>
+        <section class="result-window table-panel">
+          <div class="window-bar data-bar">
+            <span class="window-index">02</span>
+            <div>
+              <h2>Datos del modelo</h2>
+              <p id="row-count">0 puntos calculados</p>
+            </div>
+            <div class="actions">
+              <button type="button" id="download-csv" class="secondary">Exportar CSV</button>
+              <button type="button" id="download-etabs" class="secondary">Exportar ETABS</button>
+            </div>
+          </div>
+          <div class="metrics" aria-label="Parametros calculados">
+            <article><span>Z</span><strong id="metric-z">-</strong></article>
+            <article><span>eta</span><strong id="metric-eta">-</strong></article>
+            <article><span>Fa / Fd / Fs</span><strong id="metric-soil">-</strong></article>
+            <article><span>T0 / Tc / TL</span><strong id="metric-periods">-</strong></article>
           </div>
           <div class="table-wrap">
             <table>
