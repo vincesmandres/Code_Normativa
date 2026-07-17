@@ -1,0 +1,199 @@
+---
+import "../styles/global.css";
+import { importanceFactors, regions, rFactors, seismicZones, soilTypes } from "../lib/nec-engine";
+---
+
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Revision preliminar de parametros estructurales conforme a NEC-15." />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Chango&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <title>CodeNormative | Revision estructural NEC-15</title>
+  </head>
+  <body>
+    <main class="app-shell review-shell">
+      <aside class="sidebar review-sidebar" aria-label="Datos de revision">
+        <div class="brand">
+          <span class="brand-mark">C/N</span>
+          <div><p>CodeNormative</p><span>Revision estructural · NEC-15</span></div>
+        </div>
+        <nav class="module-nav" aria-label="Modulos de CodeNormative">
+          <a href="/"><span>01</span> Espectro NEC</a>
+          <a href="/revision-estructural" class="active"><span>02</span> Revision estructural</a>
+        </nav>
+        <form id="review-form" class="form-grid review-form">
+          <label>Sistema estructural
+            <select name="system">
+              <option value="rc-frame">Hormigon: portico especial</option>
+              <option value="rc-wall">Hormigon: muros / sistema dual</option>
+              <option value="steel-frame">Acero: sin arriostramiento</option>
+              <option value="steel-braced">Acero: arriostrado</option>
+              <option value="masonry">Mamposteria estructural</option>
+            </select>
+          </label>
+          <div class="numeric-row">
+            <label>Altura hn (m)<input name="height" type="number" min="1" step="0.1" value="12" /></label>
+            <label>Niveles<input name="floors" type="number" min="1" step="1" value="4" /></label>
+          </div>
+          <div class="numeric-row">
+            <label>Peso W (kN)<input name="weight" type="number" min="1" step="1" value="5000" /></label>
+            <label>Carga max. columna (kN)<input name="columnLoad" type="number" min="1" step="1" value="1200" /></label>
+          </div>
+          <label>Zona sismica<select name="zone">{seismicZones.map((item) => <option value={item.value} selected={item.value === "VI"}>{item.label}</option>)}</select></label>
+          <label>Region<select name="region">{regions.map((item) => <option value={item}>{item}</option>)}</select></label>
+          <label>Perfil de suelo<select name="soil">{soilTypes.map((item) => <option value={item.value} selected={item.value === "C"}>{item.label}</option>)}<option value="F">F - Requiere estudio especifico</option></select></label>
+          <label>Factor de importancia<select name="importance">{importanceFactors.map((item) => <option value={item.value}>{item.label}</option>)}</select></label>
+          <label>Factor R<select name="rFactor">{rFactors.map((item) => <option value={item.value}>{item.label}</option>)}</select></label>
+          <div class="numeric-row">
+            <label>phiP<input name="phiP" type="number" min="0.1" max="1" step="0.1" value="1" /></label>
+            <label>phiE<input name="phiE" type="number" min="0.1" max="1" step="0.1" value="1" /></label>
+          </div>
+          <button type="submit" class="calculate-button">Revisar proyecto <span>↗</span></button>
+        </form>
+      </aside>
+
+      <section class="workspace review-workspace">
+        <header class="topbar">
+          <div><p class="eyebrow">NEC-15 / Evaluacion preliminar</p><h1>Revision estructural</h1></div>
+          <div class="status-pill" id="review-status">Por revisar</div>
+        </header>
+
+        <p class="review-notice">Herramienta de pre-revision. Organiza requisitos y parametros; no reemplaza el analisis, la memoria de calculo ni la responsabilidad de un profesional habilitado.</p>
+
+        <section class="result-window">
+          <div class="window-bar"><span class="window-index">01</span><div><h2>Parametros calculados</h2><p>Metodo aproximado basado en fuerzas · NEC-SE-DS 6.3</p></div></div>
+          <div class="review-metrics">
+            <article><span>Periodo aproximado T</span><strong id="result-period">-</strong><small id="result-ct">-</small></article>
+            <article><span>Sa(T)</span><strong id="result-sa">-</strong><small>Aceleracion espectral</small></article>
+            <article><span>Cortante basal V</span><strong id="result-shear">-</strong><small id="result-coefficient">-</small></article>
+            <article><span>Categoria geotecnica</span><strong id="result-category">-</strong><small>NEC-SE-GC tabla 1</small></article>
+          </div>
+        </section>
+
+        <section class="review-grid">
+          <section class="result-window question-panel">
+            <div class="window-bar"><span class="window-index">02</span><div><h2>Cuestionario de especificaciones</h2><p>Responda con datos del modelo y del expediente.</p></div></div>
+            <div class="questions">
+              <label class="question-row"><span><strong>Estudio geotecnico definitivo</strong><small>Incluye exploracion, ensayos, perfil de sitio, capacidad y asentamientos.</small></span><input type="checkbox" name="geotech" form="review-form" /></label>
+              <label class="question-row"><span><strong>Memoria estructural completa</strong><small>Materiales, sistema, cargas, combinaciones, espectro, desplazamientos y derivas.</small></span><input type="checkbox" name="memory" form="review-form" /></label>
+              <label class="question-row"><span><strong>Modelo tridimensional</strong><small>Requerido para capturar masas, rigideces y torsion en estructuras irregulares.</small></span><input type="checkbox" name="model3d" form="review-form" /></label>
+              <label class="question-row"><span><strong>Junta sismica verificada</strong><small>Separacion libre frente a edificaciones o bloques adyacentes.</small></span><input type="checkbox" name="joint" form="review-form" /></label>
+              <label class="question-row"><span><strong>Revision de desempeño no lineal</strong><small>Aplicable a estructuras esenciales y de ocupacion especial.</small></span><input type="checkbox" name="nonlinear" form="review-form" /></label>
+              <div class="question-values">
+                <label>Deriva inelastica maxima (%)<input name="drift" form="review-form" type="number" min="0" step="0.01" value="1.2" /></label>
+                <label>Rigidez piso / superior<input name="stiffnessRatio" form="review-form" type="number" min="0" step="0.01" value="0.85" /></label>
+                <label>Masa piso / adyacente<input name="massRatio" form="review-form" type="number" min="0" step="0.01" value="1.10" /></label>
+                <label>Aberturas de diafragma (%)<input name="opening" form="review-form" type="number" min="0" max="100" step="1" value="15" /></label>
+              </div>
+            </div>
+          </section>
+
+          <section class="result-window findings-panel">
+            <div class="window-bar"><span class="window-index">03</span><div><h2>Resultado de la revision</h2><p id="finding-summary">Complete el formulario.</p></div></div>
+            <div id="findings" class="findings" aria-live="polite"></div>
+          </section>
+        </section>
+
+        <section class="result-window library-panel">
+          <div class="window-bar"><span class="window-index">04</span><div><h2>Biblioteca oficial NEC-15</h2><p>Documentos publicados por MIDUVI · descarga directa en PDF</p></div></div>
+          <div class="document-grid">
+            <a href="https://www.habitatyvivienda.gob.ec/wp-content/uploads/2023/03/1.-NEC-SE-CG-Cargas-No-Sismicas.pdf" download><span>NEC-SE-CG</span><strong>Cargas no sismicas</strong><small>Descargar PDF ↘</small></a>
+            <a href="https://www.habitatyvivienda.gob.ec/wp-content/uploads/2023/03/2.-NEC-SE-DS-Peligro-Sismico-parte-1.pdf" download><span>NEC-SE-DS · I</span><strong>Peligro sismico</strong><small>Descargar PDF ↘</small></a>
+            <a href="https://www.habitatyvivienda.gob.ec/wp-content/uploads/2023/03/3.-NEC-SE-DS-Peligro-Sismico-parte-2.pdf" download><span>NEC-SE-DS · II</span><strong>Diseño sismorresistente</strong><small>Descargar PDF ↘</small></a>
+            <a href="https://www.habitatyvivienda.gob.ec/wp-content/uploads/2023/03/6.-NEC-SE-RE-Riesgo-sismico.pdf" download><span>NEC-SE-RE</span><strong>Evaluacion y rehabilitacion</strong><small>Descargar PDF ↘</small></a>
+            <a href="https://www.habitatyvivienda.gob.ec/wp-content/uploads/2023/03/7.-NEC-SE-GC-Geotecnia-y-Cimentaciones.pdf" download><span>NEC-SE-GC</span><strong>Geotecnia y cimentaciones</strong><small>Descargar PDF ↘</small></a>
+            <a href="https://www.habitatyvivienda.gob.ec/wp-content/uploads/2023/03/8.-NEC-SE-HM-Hormigon-Armado.pdf" download><span>NEC-SE-HM</span><strong>Hormigon armado</strong><small>Descargar PDF ↘</small></a>
+            <a href="https://www.habitatyvivienda.gob.ec/wp-content/uploads/2023/03/9.-NEC-SE-AC-Estructuras-de-Acero.pdf" download><span>NEC-SE-AC</span><strong>Estructuras de acero</strong><small>Descargar PDF ↘</small></a>
+            <a href="https://www.habitatyvivienda.gob.ec/wp-content/uploads/2023/03/GUIA-5-EVALUACION-Y-REHABILITACION.pdf" download><span>Guia 5</span><strong>Evaluacion y rehabilitacion</strong><small>Descargar PDF ↘</small></a>
+          </div>
+        </section>
+      </section>
+    </main>
+
+    <script>
+      import { calculateSpectrum } from "../lib/nec-engine";
+      import type { Region, SeismicZone, SoilType } from "../lib/nec-engine";
+
+      const form = document.querySelector<HTMLFormElement>("#review-form")!;
+      const systems = {
+        "rc-frame": { ct: .055, alpha: .9, drift: 2, name: "Hormigon aporticado" },
+        "rc-wall": { ct: .055, alpha: .75, drift: 2, name: "Hormigon con muros" },
+        "steel-frame": { ct: .072, alpha: .8, drift: 2, name: "Acero sin arriostramiento" },
+        "steel-braced": { ct: .073, alpha: .75, drift: 2, name: "Acero arriostrado" },
+        masonry: { ct: .055, alpha: .75, drift: 1, name: "Mamposteria estructural" },
+      } as const;
+
+      const number = (data: FormData, key: string) => Number(data.get(key));
+      const text = (data: FormData, key: string) => String(data.get(key));
+      const set = (id: string, value: string) => { const node = document.querySelector(id); if (node) node.textContent = value; };
+      const finding = (state: "pass" | "warn" | "fail", title: string, detail: string, ref: string) => ({ state, title, detail, ref });
+
+      function category(floors: number, load: number): string {
+        const byFloors = floors <= 3 ? 0 : floors <= 10 ? 1 : floors <= 20 ? 2 : 3;
+        const byLoad = load <= 800 ? 0 : load <= 4000 ? 1 : load <= 8000 ? 2 : 3;
+        return ["Baja", "Media", "Alta", "Especial"][Math.max(byFloors, byLoad)];
+      }
+
+      function update() {
+        const data = new FormData(form);
+        const system = systems[text(data, "system") as keyof typeof systems];
+        const height = number(data, "height");
+        const floors = number(data, "floors");
+        const weight = number(data, "weight");
+        const columnLoad = number(data, "columnLoad");
+        const soil = text(data, "soil");
+        const period = system.ct * height ** system.alpha;
+        const spectrumSoil = soil === "F" ? "E" : soil;
+        const spectrum = calculateSpectrum({
+          zone: text(data, "zone") as SeismicZone,
+          region: text(data, "region") as Region,
+          soil: spectrumSoil as SoilType,
+          rFactor: number(data, "rFactor"),
+          importance: number(data, "importance"),
+          phiP: number(data, "phiP"),
+          phiE: number(data, "phiE"),
+        });
+        const point = spectrum.points.reduce((best, item) => Math.abs(item.period - period) < Math.abs(best.period - period) ? item : best);
+        const coefficient = number(data, "importance") * point.sa / (number(data, "rFactor") * number(data, "phiP") * number(data, "phiE"));
+        const shear = coefficient * weight;
+        const drift = number(data, "drift");
+        const essential = number(data, "importance") > 1;
+        const results = [
+          finding(data.has("geotech") ? "pass" : "fail", "Estudio geotecnico", data.has("geotech") ? "El expediente declara exploracion y caracterizacion del subsuelo." : "Debe acompañar la memoria e identificar el perfil de sitio, capacidad y asentamientos.", "NEC-SE-DS 2.3 / NEC-SE-GC 3.1"),
+          finding(data.has("memory") ? "pass" : "fail", "Memoria de calculo", data.has("memory") ? "Se declara disponible el expediente estructural." : "Faltan los antecedentes minimos para justificar el diseño.", "NEC-SE-DS 2.3"),
+          finding(drift <= system.drift ? "pass" : "fail", "Control de deriva", `${drift.toFixed(2)}% reportado; limite ${system.drift.toFixed(2)}% para ${system.name.toLowerCase()}.`, "NEC-SE-DS 4.2.2 y 6.3.9"),
+          finding(number(data, "stiffnessRatio") >= .70 ? "pass" : "fail", "Rigidez en elevacion", number(data, "stiffnessRatio") >= .70 ? "No activa el umbral directo de piso flexible." : "La rigidez es menor al 70% del piso superior: irregularidad de piso flexible.", "NEC-SE-DS tabla 14"),
+          finding(number(data, "massRatio") <= 1.5 ? "pass" : "fail", "Distribucion de masa", number(data, "massRatio") <= 1.5 ? "No supera la relacion 1.50 entre pisos adyacentes." : "La masa supera 1.50 veces la de un piso adyacente.", "NEC-SE-DS tabla 14"),
+          finding(number(data, "opening") <= 50 ? "pass" : "fail", "Continuidad del diafragma", number(data, "opening") <= 50 ? "Las aberturas declaradas no superan el umbral del 50%." : "Las aberturas superan el 50% del area del piso.", "NEC-SE-DS tabla 13"),
+          finding(soil !== "F" ? "pass" : "warn", "Perfil de suelo", soil !== "F" ? `Perfil ${soil} utilizado para la estimacion.` : "El perfil F exige espectro y estudio especificos del sitio; los valores mostrados son solo referenciales.", "NEC-SE-DS 3.2 y 6.3.2"),
+          finding(data.has("model3d") ? "pass" : "warn", "Modelo estructural", data.has("model3d") ? "Se declara modelo tridimensional." : "Si existe cualquier irregularidad, debe emplearse un modelo tridimensional.", "NEC-SE-DS 6.1.6"),
+          finding(data.has("joint") ? "pass" : "warn", "Separacion sismica", data.has("joint") ? "La junta ha sido verificada." : "Verifique desplazamientos y junta libre frente a estructuras adyacentes.", "NEC-SE-DS 5.1"),
+          finding(!essential || data.has("nonlinear") ? "pass" : "fail", "Verificacion de desempeño", !essential ? "No se activa por importancia declarada." : data.has("nonlinear") ? "Se declara analisis no lineal de desempeño." : "Las estructuras especiales o esenciales requieren verificacion de desempeño.", "NEC-SE-RE 3.1 / NEC-SE-DS 4.3"),
+        ];
+
+        set("#result-period", `${period.toFixed(3)} s`);
+        set("#result-ct", `Ct ${system.ct} · α ${system.alpha}`);
+        set("#result-sa", `${point.sa.toFixed(3)} g`);
+        set("#result-shear", `${shear.toFixed(1)} kN`);
+        set("#result-coefficient", `V/W = ${coefficient.toFixed(4)}`);
+        set("#result-category", category(floors, columnLoad));
+        const failed = results.filter((item) => item.state === "fail").length;
+        const warned = results.filter((item) => item.state === "warn").length;
+        set("#finding-summary", `${results.length - failed - warned} conformes · ${failed} observaciones · ${warned} por confirmar`);
+        const status = document.querySelector("#review-status")!;
+        status.textContent = failed ? "Requiere revision" : warned ? "Condicionado" : "Pre-revision conforme";
+        status.className = `status-pill ${failed ? "error" : warned ? "warning" : ""}`;
+        document.querySelector("#findings")!.innerHTML = results.map((item) => `<article class="finding ${item.state}"><span class="finding-mark">${item.state === "pass" ? "✓" : item.state === "fail" ? "!" : "?"}</span><div><strong>${item.title}</strong><p>${item.detail}</p><small>${item.ref}</small></div></article>`).join("");
+      }
+
+      form.addEventListener("submit", (event) => { event.preventDefault(); update(); });
+      form.addEventListener("input", update);
+      form.addEventListener("change", update);
+      update();
+    </script>
+  </body>
+</html>
