@@ -1,0 +1,221 @@
+---
+import "../styles/global.css";
+---
+
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Predimensionamiento y control de estudio geotecnico conforme NEC-SE-GC." />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Chango&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <title>CodeNormative | Estudio de suelos NEC-15</title>
+  </head>
+  <body>
+    <main class="app-shell">
+      <aside class="sidebar soil-sidebar" aria-label="Datos geotecnicos">
+        <div class="brand"><span class="brand-mark">C/N</span><div><p>CodeNormative</p><span>Geotecnia · NEC-SE-GC</span></div></div>
+        <nav class="module-nav" aria-label="Modulos de CodeNormative">
+          <a href="/"><span>01</span> Espectro NEC</a>
+          <a href="/revision-estructural"><span>02</span> Revision estructural</a>
+          <a href="/estudio-suelos" class="active"><span>03</span> Estudio de suelos</a>
+        </nav>
+        <form id="soil-form" class="form-grid review-form">
+          <div class="numeric-row">
+            <label>Niveles<input name="floors" type="number" min="1" step="1" value="4" /></label>
+            <label>Carga max. columna (kN)<input name="columnLoad" type="number" min="1" step="1" value="1200" /></label>
+          </div>
+          <label>Tipo de cimentacion
+            <select name="foundation">
+              <option value="footing">Zapata superficial</option>
+              <option value="raft">Losa de cimentacion</option>
+              <option value="pile">Pilote individual</option>
+              <option value="pile-group">Grupo de pilotes</option>
+              <option value="excavation">Excavacion / subsuelo</option>
+            </select>
+          </label>
+          <div class="numeric-row">
+            <label>Ancho B (m)<input name="width" type="number" min="0.1" step="0.1" value="2" /></label>
+            <label>Longitud pilote / excavacion (m)<input name="length" type="number" min="0" step="0.1" value="10" /></label>
+          </div>
+          <div class="numeric-row">
+            <label>Diametro pilote (m)<input name="diameter" type="number" min="0.1" step="0.1" value="0.5" /></label>
+            <label>Ancho grupo/cabezal (m)<input name="groupWidth" type="number" min="0.1" step="0.1" value="3" /></label>
+          </div>
+          <div class="numeric-row">
+            <label>Sondeos ejecutados<input name="actualBorings" type="number" min="0" step="1" value="4" /></label>
+            <label>Profundidad alcanzada (m)<input name="actualDepth" type="number" min="0" step="0.5" value="15" /></label>
+          </div>
+          <label>Vs30 (m/s)<input name="vs30" type="number" min="0" step="1" value="320" /></label>
+          <div class="numeric-row">
+            <label>Carga servicio (kN)<input name="serviceLoad" type="number" min="0" step="1" value="900" /></label>
+            <label>Area cimentacion (m²)<input name="area" type="number" min="0.01" step="0.1" value="4" /></label>
+          </div>
+          <div class="numeric-row">
+            <label>qu neta (kPa)<input name="qunet" type="number" min="0" step="1" value="750" /></label>
+            <label>q sobrecarga retirada (kPa)<input name="qob" type="number" min="0" step="1" value="0" /></label>
+          </div>
+          <label>Combinacion para capacidad
+            <select name="loadCase"><option value="normal">D + L normal · FS 3.0</option><option value="maximum">D + L maxima · FS 2.5</option><option value="seismic">D + L + sismo · FS 1.5</option></select>
+          </label>
+          <div class="numeric-row">
+            <label>Asentamiento estimado (mm)<input name="settlement" type="number" min="0" step="1" value="18" /></label>
+            <label>Limite del proyecto (mm)<input name="settlementLimit" type="number" min="0" step="1" value="25" /></label>
+          </div>
+          <button type="submit" class="calculate-button">Evaluar estudio <span>↗</span></button>
+        </form>
+      </aside>
+
+      <section class="workspace soil-workspace">
+        <header class="topbar"><div><p class="eyebrow">NEC-15 / NEC-SE-GC</p><h1>Estudio de suelos</h1></div><div class="status-pill" id="soil-status">Por evaluar</div></header>
+        <p class="review-notice">Predimensionamiento y control de completitud. La clasificación final del perfil, los parámetros resistentes y las recomendaciones de cimentación corresponden al ingeniero geotécnico responsable.</p>
+
+        <section class="result-window">
+          <div class="window-bar"><span class="window-index">01</span><div><h2>Alcance mínimo de exploración</h2><p>NEC-SE-GC tablas 1, 2 y 3</p></div></div>
+          <div class="review-metrics soil-metrics">
+            <article><span>Categoria</span><strong id="soil-category">-</strong><small id="category-basis">-</small></article>
+            <article><span>Sondeos mínimos</span><strong id="required-borings">-</strong><small>Por unidad de construccion</small></article>
+            <article><span>Profundidad requerida</span><strong id="required-depth">-</strong><small id="depth-basis">-</small></article>
+            <article><span>Perfil preliminar</span><strong id="soil-profile">-</strong><small id="profile-basis">-</small></article>
+          </div>
+        </section>
+
+        <section class="soil-grid">
+          <section class="result-window capacity-panel">
+            <div class="window-bar"><span class="window-index">02</span><div><h2>Capacidad y servicio</h2><p>Comparacion de presión, capacidad admisible y asentamiento</p></div></div>
+            <div class="capacity-visual">
+              <div class="capacity-numbers"><div><span>Presion aplicada</span><strong id="applied-pressure">-</strong></div><div><span>q admisible</span><strong id="allowable-capacity">-</strong></div><div><span>Utilizacion</span><strong id="capacity-use">-</strong></div></div>
+              <div class="capacity-track" aria-label="Utilizacion de capacidad portante"><span id="capacity-bar"></span></div>
+              <p id="capacity-note">Ingrese los parametros del informe geotecnico.</p>
+            </div>
+            <div class="soil-flags">
+              <label><input type="checkbox" name="specialSoil" form="soil-form" /> Perfil especial F / relleno no controlado</label>
+              <label><input type="checkbox" name="groundwater" form="soil-form" /> Nivel freatico investigado</label>
+              <label><input type="checkbox" name="liquefaction" form="soil-form" /> Potencial de licuacion evaluado</label>
+              <label><input type="checkbox" name="neighbors" form="soil-form" /> Efectos sobre vecinos evaluados</label>
+            </div>
+          </section>
+
+          <section class="result-window findings-panel">
+            <div class="window-bar"><span class="window-index">03</span><div><h2>Control del estudio</h2><p id="soil-summary">Complete los datos.</p></div></div>
+            <div id="soil-findings" class="findings" aria-live="polite"></div>
+          </section>
+        </section>
+
+        <section class="result-window">
+          <div class="window-bar"><span class="window-index">04</span><div><h2>Contenido del informe</h2><p>Lista de entrega para revisión del expediente geotécnico</p></div></div>
+          <div class="report-checklist">
+            <label><input type="checkbox" name="locationPlans" form="soil-form" /> Planos de localizacion y ubicación de trabajos de campo</label>
+            <label><input type="checkbox" name="logs" form="soil-form" /> Registros de perforacion y ensayos de campo/laboratorio</label>
+            <label><input type="checkbox" name="profile" form="soil-form" /> Perfil geotecnico con incertidumbres identificadas</label>
+            <label><input type="checkbox" name="calculations" form="soil-form" /> Memoria de calculo, metodologia, graficos y tablas</label>
+            <label><input type="checkbox" name="construction" form="soil-form" /> Recomendaciones y sistema constructivo</label>
+            <a href="https://www.habitatyvivienda.gob.ec/wp-content/uploads/2023/03/7.-NEC-SE-GC-Geotecnia-y-Cimentaciones.pdf" download>Descargar NEC-SE-GC PDF ↘</a>
+          </div>
+        </section>
+      </section>
+    </main>
+
+    <script>
+      const form = document.querySelector<HTMLFormElement>("#soil-form")!;
+      const n = (data: FormData, key: string) => Number(data.get(key));
+      const s = (data: FormData, key: string) => String(data.get(key));
+      const set = (selector: string, value: string) => { const node = document.querySelector(selector); if (node) node.textContent = value; };
+
+      const categories = [
+        { name: "Baja", borings: 3, depth: 6 },
+        { name: "Media", borings: 4, depth: 15 },
+        { name: "Alta", borings: 4, depth: 25 },
+        { name: "Especial", borings: 5, depth: 30 },
+      ];
+
+      function categoryIndex(floors: number, load: number) {
+        const floorIndex = floors <= 3 ? 0 : floors <= 10 ? 1 : floors <= 20 ? 2 : 3;
+        const loadIndex = load <= 800 ? 0 : load <= 4000 ? 1 : load <= 8000 ? 2 : 3;
+        return Math.max(floorIndex, loadIndex);
+      }
+
+      function foundationDepth(data: FormData) {
+        const type = s(data, "foundation");
+        const width = n(data, "width");
+        const length = n(data, "length");
+        const diameter = n(data, "diameter");
+        const groupWidth = n(data, "groupWidth");
+        if (type === "raft") return { value: 1.5 * width, label: "1.5 × ancho de losa" };
+        if (type === "footing") return { value: 2.5 * width, label: "2.5 × ancho de zapata" };
+        if (type === "pile") return { value: length + 4 * diameter, label: "longitud + 4 diametros" };
+        if (type === "pile-group") return { value: Math.max(length + 2 * groupWidth, 2.5 * groupWidth), label: "max(L + 2B grupo, 2.5B cabezal)" };
+        return { value: 1.5 * length, label: "1.5 × profundidad de excavacion" };
+      }
+
+      function profile(vs30: number, special: boolean) {
+        if (special) return { name: "F", detail: "Evaluacion especifica del sitio" };
+        if (vs30 >= 1500) return { name: "A", detail: "Vs30 ≥ 1500 m/s" };
+        if (vs30 >= 760) return { name: "B", detail: "760 ≤ Vs30 < 1500 m/s" };
+        if (vs30 >= 360) return { name: "C", detail: "360 ≤ Vs30 < 760 m/s" };
+        if (vs30 >= 180) return { name: "D", detail: "180 ≤ Vs30 < 360 m/s" };
+        return { name: "E", detail: "Vs30 < 180 m/s" };
+      }
+
+      function update() {
+        const data = new FormData(form);
+        const index = categoryIndex(n(data, "floors"), n(data, "columnLoad"));
+        const category = categories[index];
+        const foundation = foundationDepth(data);
+        const requiredDepth = Math.max(category.depth, foundation.value);
+        const soilProfile = profile(n(data, "vs30"), data.has("specialSoil"));
+        const fs = s(data, "loadCase") === "normal" ? 3 : s(data, "loadCase") === "maximum" ? 2.5 : 1.5;
+        const qApplied = n(data, "serviceLoad") / n(data, "area");
+        const qAllowable = n(data, "qunet") / fs + n(data, "qob");
+        const utilization = qApplied / qAllowable;
+        const settlementOk = n(data, "settlement") <= n(data, "settlementLimit");
+        const items = [
+          { ok: n(data, "actualBorings") >= category.borings, title: "Numero de sondeos", detail: `${n(data, "actualBorings")} ejecutados / ${category.borings} mínimos.`, ref: "NEC-SE-GC 3.5.2, tabla 2" },
+          { ok: n(data, "actualDepth") >= requiredDepth, title: "Profundidad de exploracion", detail: `${n(data, "actualDepth").toFixed(1)} m alcanzados / ${requiredDepth.toFixed(1)} m requeridos.`, ref: "NEC-SE-GC 3.5.3, tablas 2 y 3" },
+          { ok: utilization <= 1, title: "Capacidad portante", detail: `${(utilization * 100).toFixed(1)}% de utilización con FS ${fs.toFixed(1)}.`, ref: "NEC-SE-GC 6.2 y 7.2" },
+          { ok: settlementOk, title: "Estado limite de servicio", detail: `${n(data, "settlement").toFixed(1)} mm estimados / ${n(data, "settlementLimit").toFixed(1)} mm tolerables.`, ref: "NEC-SE-GC 6.3 y 7.3" },
+          { ok: !data.has("specialSoil"), warn: data.has("specialSoil"), title: "Respuesta de sitio", detail: data.has("specialSoil") ? "El perfil F requiere evaluacion especifica y no admite coeficientes tabulados." : `Clasificacion preliminar ${soilProfile.name} por Vs30.`, ref: "NEC-SE-DS 3.2.1 y 10.5.4" },
+          { ok: data.has("groundwater"), title: "Agua subterranea", detail: data.has("groundwater") ? "Nivel freatico investigado." : "Debe establecerse su posicion y variacion esperada.", ref: "NEC-SE-GC 3.2 y 3.3" },
+          { ok: data.has("liquefaction"), title: "Licuacion y degradacion", detail: data.has("liquefaction") ? "Evaluacion declarada en el estudio." : "Confirme susceptibilidad a licuacion y pérdida de resistencia.", ref: "NEC-SE-GC / NEC-SE-DS perfil F1" },
+          { ok: data.has("neighbors"), title: "Construcciones vecinas", detail: data.has("neighbors") ? "Efectos sobre predios vecinos evaluados." : "Revisar asentamientos, excavacion y descenso del nivel freatico sobre vecinos.", ref: "NEC-SE-GC 3.3" },
+        ];
+        const reportKeys = ["locationPlans", "logs", "profile", "calculations", "construction"];
+        const reportComplete = reportKeys.filter((key) => data.has(key)).length;
+        items.push({ ok: reportComplete === reportKeys.length, title: "Informe geotecnico", detail: `${reportComplete} de ${reportKeys.length} grupos documentales declarados.`, ref: "NEC-SE-GC 3.3" });
+
+        set("#soil-category", category.name);
+        set("#category-basis", `${n(data, "floors")} niveles · ${n(data, "columnLoad")} kN/columna`);
+        set("#required-borings", String(category.borings));
+        set("#required-depth", `${requiredDepth.toFixed(1)} m`);
+        set("#depth-basis", requiredDepth === category.depth ? `Gobierna categoria ${category.name}` : foundation.label);
+        set("#soil-profile", soilProfile.name);
+        set("#profile-basis", soilProfile.detail);
+        set("#applied-pressure", `${qApplied.toFixed(1)} kPa`);
+        set("#allowable-capacity", `${qAllowable.toFixed(1)} kPa`);
+        set("#capacity-use", `${(utilization * 100).toFixed(1)}%`);
+        set("#capacity-note", utilization <= 1 ? "La presión aplicada no supera la capacidad admisible calculada." : "La presión aplicada supera la capacidad admisible; revise geometría o solución de cimentación.");
+        const bar = document.querySelector<HTMLElement>("#capacity-bar")!;
+        bar.style.width = `${Math.min(utilization * 100, 100)}%`;
+        bar.className = utilization > 1 ? "over" : utilization > .8 ? "near" : "";
+        const failed = items.filter((item) => !item.ok && !item.warn).length;
+        const warned = items.filter((item) => item.warn).length;
+        set("#soil-summary", `${items.length - failed - warned} conformes · ${failed} observaciones · ${warned} especiales`);
+        const status = document.querySelector("#soil-status")!;
+        status.textContent = failed ? "Requiere ajustes" : warned ? "Estudio especifico" : "Pre-revision conforme";
+        status.className = `status-pill ${failed ? "error" : warned ? "warning" : ""}`;
+        document.querySelector("#soil-findings")!.innerHTML = items.map((item) => {
+          const state = item.ok ? "pass" : item.warn ? "warn" : "fail";
+          const mark = state === "pass" ? "✓" : state === "warn" ? "?" : "!";
+          return `<article class="finding ${state}"><span class="finding-mark">${mark}</span><div><strong>${item.title}</strong><p>${item.detail}</p><small>${item.ref}</small></div></article>`;
+        }).join("");
+      }
+
+      form.addEventListener("submit", (event) => { event.preventDefault(); update(); });
+      form.addEventListener("input", update);
+      form.addEventListener("change", update);
+      update();
+    </script>
+  </body>
+</html>

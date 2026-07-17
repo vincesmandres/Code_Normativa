@@ -418,6 +418,28 @@ td:first-child {
 .document-grid a small { margin-top: auto; }
 .document-grid a:hover { background: #efeee8; }
 
+.soil-sidebar .brand { margin-bottom: 24px; }
+.soil-workspace { max-width: 1500px; }
+.soil-grid { display: grid; grid-template-columns: minmax(0,1.05fr) minmax(340px,.95fr); gap: 24px; align-items: start; }
+.capacity-visual { padding: 22px 20px 18px; }
+.capacity-numbers { display: grid; grid-template-columns: repeat(3,1fr); gap: 18px; }
+.capacity-numbers div { display: grid; gap: 7px; }
+.capacity-numbers span { color: var(--muted); font-size: .78rem; }
+.capacity-numbers strong { font-size: 1.25rem; font-variant-numeric: tabular-nums; }
+.capacity-track { height: 12px; margin: 22px 0 10px; background: #dfded7; overflow: hidden; }
+.capacity-track span { display: block; width: 0; height: 100%; background: #4f785f; transition: width .25s ease; }
+.capacity-track span.near { background: #c18a28; }
+.capacity-track span.over { background: #b53a2e; }
+.capacity-visual > p { margin: 0; color: var(--muted); font-size: .82rem; }
+.soil-flags { display: grid; grid-template-columns: 1fr 1fr; border-top: 1px solid var(--line); }
+.soil-flags label { grid-template-columns: auto 1fr; align-items: center; gap: 9px; min-height: 52px; padding: 10px 16px; border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); color: var(--ink); font-size: .76rem; }
+.soil-flags input, .report-checklist input { width: 18px; height: 18px; min-height: 0; accent-color: var(--accent); }
+.report-checklist { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); }
+.report-checklist label, .report-checklist a { min-height: 72px; padding: 15px 18px; border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+.report-checklist label { grid-template-columns: auto 1fr; align-items: center; gap: 10px; color: var(--ink); font-size: .8rem; }
+.report-checklist a { display: flex; align-items: center; color: var(--ink); font-size: .82rem; font-weight: 600; text-decoration: none; background: #efeee8; }
+.report-checklist a:hover { background: #e4e3dc; }
+
 @media (max-width: 980px) {
   .sidebar {
     position: static;
@@ -437,6 +459,7 @@ td:first-child {
 
   .review-metrics, .document-grid { grid-template-columns: repeat(2,minmax(0,1fr)); }
   .review-grid { grid-template-columns: 1fr; }
+  .soil-grid { grid-template-columns: 1fr; }
   .document-grid a:nth-child(2n) { border-right: 0; }
 }
 
@@ -466,4 +489,6 @@ td:first-child {
 
   .review-metrics, .document-grid, .question-values { grid-template-columns: 1fr; }
   .review-metrics article, .document-grid a { border-right: 0; border-bottom: 1px solid var(--line); }
+  .capacity-numbers, .soil-flags, .report-checklist { grid-template-columns: 1fr; }
+  .soil-flags label, .report-checklist label, .report-checklist a { border-right: 0; }
 }
