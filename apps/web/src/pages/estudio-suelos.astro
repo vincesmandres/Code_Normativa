@@ -21,6 +21,7 @@ import "../styles/global.css";
           <a href="/"><span>01</span> Espectro NEC</a>
           <a href="/revision-estructural"><span>02</span> Revision estructural</a>
           <a href="/estudio-suelos" class="active"><span>03</span> Estudio de suelos</a>
+          <a href="/reporte"><span>04</span> Reporte integral</a>
         </nav>
         <form id="soil-form" class="form-grid review-form">
           <div class="numeric-row">
@@ -112,6 +113,11 @@ import "../styles/global.css";
           <div class="boring-observations"><label>Observaciones de campo<textarea name="fieldNotes" form="soil-form" rows="3" placeholder="Perdida de circulacion, rechazo, cambios de color, olor, cementacion, nivel de agua..."></textarea></label></div>
         </section>
 
+        <section class="result-window site-model-panel">
+          <div class="window-bar boring-log-bar"><span class="window-index">03</span><div><h2>Proyecto multisondeo y modelo 3D</h2><p>Correlacion espacial conceptual; requiere validacion del geotecnico responsable</p></div><div class="actions"><button type="button" id="new-boring" class="secondary">+ Nuevo sondeo</button></div></div>
+          <div class="site-model-grid"><aside><strong>Sondeos del proyecto</strong><div id="boring-list" class="boring-list"></div><p id="model-validation" class="model-validation"></p></aside><div id="site-model" class="site-model" role="img" aria-label="Modelo tridimensional conceptual del subsuelo"></div></div>
+        </section>
+
         <section class="result-window">
           <div class="window-bar"><span class="window-index">03</span><div><h2>Alcance mínimo de exploración</h2><p>NEC-SE-GC tablas 1, 2 y 3</p></div></div>
           <div class="review-metrics soil-metrics">
@@ -160,6 +166,9 @@ import "../styles/global.css";
 
     <script>
       import { jsPDF } from "jspdf";
+      import type { Borehole } from "../lib/geotech-engine";
+      import { validateBorehole } from "../lib/geotech-engine";
+      import { saveModule } from "../lib/project-store";
       const form = document.querySelector<HTMLFormElement>("#soil-form")!;
       const layerRows = document.querySelector<HTMLTableSectionElement>("#layer-rows")!;
       const boreProfile = document.querySelector<HTMLElement>("#bore-profile")!;
@@ -181,6 +190,32 @@ import "../styles/global.css";
         { from: 0.5, to: 3, description: "Arena limosa medianamente densa", uscs: "SM", sample: "SPT-01", n1: 5, n2: 7, n3: 8, moisture: 18, gamma: 18.5, cohesion: 3, friction: 30, permeability: 5e-6, modulus: 18 },
         { from: 3, to: 6, description: "Arcilla de baja plasticidad, firme", uscs: "CL", sample: "SPT-02", n1: 6, n2: 9, n3: 10, moisture: 26, gamma: 19, cohesion: 25, friction: 22, permeability: 1e-8, modulus: 15 },
       ];
+      let boreholes: Borehole[] = [];
+      let activeBoring = 0;
+
+      function captureBoring(): Borehole {
+        const data = new FormData(form);
+        return { id: String(data.get("boringId") || `S-${String(activeBoring + 1).padStart(2,"0")}`), x: Number(data.get("coordE")) || 0, y: Number(data.get("coordN")) || 0, elevation: Number(data.get("elevation")) || 0, finalDepth: Number(data.get("boringFinalDepth")) || 1, waterDepth: data.get("waterDepth") ? Number(data.get("waterDepth")) : null, layers: structuredClone(layers) };
+      }
+
+      function syncActiveBoring() { boreholes[activeBoring] = captureBoring(); }
+
+      function loadBoring(index: number) {
+        syncActiveBoring(); activeBoring = index; const borehole = boreholes[index]; layers = structuredClone(borehole.layers);
+        const values: Record<string, string|number> = { boringId: borehole.id, coordE: borehole.x, coordN: borehole.y, elevation: borehole.elevation, boringFinalDepth: borehole.finalDepth, waterDepth: borehole.waterDepth ?? "" };
+        Object.entries(values).forEach(([key,value]) => { const field=form.elements.namedItem(key) as HTMLInputElement|null; if(field) field.value=String(value); });
+        renderLayers(); renderBoreholeProject(); update();
+      }
+
+      function renderBoreholeProject() {
+        syncActiveBoring();
+        const list = document.querySelector("#boring-list")!;
+        list.innerHTML = boreholes.map((borehole,index)=>`<button type="button" class="boring-chip ${index===activeBoring?"active":""}" data-boring="${index}"><strong>${escapeHtml(borehole.id)}</strong><span>E ${borehole.x.toFixed(1)} / N ${borehole.y.toFixed(1)} / ${borehole.finalDepth.toFixed(1)} m</span></button>`).join("");
+        const allErrors=boreholes.flatMap(validateBorehole); set("#model-validation", allErrors.length ? `${allErrors.length} observaciones de consistencia: ${allErrors[0]}` : `${boreholes.length} sondeo(s) consistentes para correlacion conceptual.`);
+        const palette=["#c9ad79","#9fae9b","#82958a","#98896c","#a4a0b3"];
+        const minX=Math.min(...boreholes.map(b=>b.x)), minY=Math.min(...boreholes.map(b=>b.y));
+        document.querySelector("#site-model")!.innerHTML=`<svg viewBox="0 0 760 420" aria-hidden="true"><defs><linearGradient id="ground" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#eef1eb"/><stop offset="1" stop-color="#d7ddd3"/></linearGradient></defs><path d="M80 90 L430 40 L690 135 L335 190 Z" fill="url(#ground)" stroke="#758174"/>${boreholes.map((b)=>{const x=170+(b.x-minX)*.35+(b.y-minY)*.18;const y=115-(b.y-minY)*.12;const scale=240/Math.max(...boreholes.map(q=>q.finalDepth),1);return `<g><text x="${x-15}" y="${y-10}" font-size="13" font-weight="700">${escapeHtml(b.id)}</text>${b.layers.map((l,li)=>`<path d="M${x} ${y+l.from*scale} l42 -6 v${Math.max((l.to-l.from)*scale,4)} l-42 6 z" fill="${palette[li%palette.length]}" stroke="#59635a"><title>${escapeHtml(l.uscs)} ${escapeHtml(l.description)}</title></path>`).join("")}<line x1="${x}" y1="${y}" x2="${x}" y2="${y+b.finalDepth*scale}" stroke="#26352b"/></g>`}).join("")}</svg>`;
+      }
 
       const escapeHtml = (value: unknown) => String(value ?? "").replace(/[&<>'"]/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;" })[char]!);
 
@@ -331,6 +366,8 @@ import "../styles/global.css";
           const mark = state === "pass" ? "✓" : state === "warn" ? "?" : "!";
           return `<article class="finding ${state}"><span class="finding-mark">${mark}</span><div><strong>${item.title}</strong><p>${item.detail}</p><small>${item.ref}</small></div></article>`;
         }).join("");
+        syncActiveBoring();
+        saveModule("geotech", Object.fromEntries(data) as Record<string, unknown>, { category: category.name, requiredBorings: category.borings, requiredDepth, profile: soilProfile.name, appliedPressure: qApplied, allowableCapacity: qAllowable, utilization, settlementOk, boreholeCount: boreholes.length, validationErrors: boreholes.flatMap(validateBorehole).length });
       }
 
       form.addEventListener("submit", (event) => { event.preventDefault(); update(); });
@@ -340,7 +377,9 @@ import "../styles/global.css";
       layerRows.addEventListener("change", syncLayers);
       layerRows.addEventListener("click", (event) => { const button = (event.target as Element).closest(".remove-layer"); if (!button) return; const row = button.closest<HTMLTableRowElement>("tr[data-index]")!; if (layers.length > 1) layers.splice(Number(row.dataset.index), 1); renderLayers(); });
       document.querySelector("#add-layer")!.addEventListener("click", () => { const from = layers.at(-1)?.to ?? 0; layers.push({ from, to: from + 1.5, description: "Nuevo estrato", uscs: "CL", sample: `M-${String(layers.length + 1).padStart(2,"0")}`, n1: 0, n2: 0, n3: 0, moisture: 0, gamma: 18, cohesion: 0, friction: 28, permeability: 1e-7, modulus: 10 }); renderLayers(); });
-      document.querySelector("#save-boring")!.addEventListener("click", () => { const payload = { form: Object.fromEntries(new FormData(form)), layers }; localStorage.setItem("codenormative-boring", JSON.stringify(payload)); const button = document.querySelector<HTMLButtonElement>("#save-boring")!; button.textContent = "Borrador guardado ✓"; setTimeout(() => button.textContent = "Guardar borrador", 1600); });
+      document.querySelector("#save-boring")!.addEventListener("click", () => { syncActiveBoring(); const payload = { schema: "codenormative.geotech.v2", form: Object.fromEntries(new FormData(form)), boreholes, activeBoring }; localStorage.setItem("codenormative-boring", JSON.stringify(payload)); renderBoreholeProject(); const button = document.querySelector<HTMLButtonElement>("#save-boring")!; button.textContent = "Proyecto guardado"; setTimeout(() => button.textContent = "Guardar", 1600); });
+      document.querySelector("#new-boring")!.addEventListener("click", () => { syncActiveBoring(); const next=boreholes.length+1; const copy=structuredClone(boreholes[activeBoring]); copy.id=`S-${String(next).padStart(2,"0")}`; copy.x+=10; copy.y+=10; boreholes.push(copy); loadBoring(boreholes.length-1); });
+      document.querySelector("#boring-list")!.addEventListener("click",(event)=>{const button=(event.target as Element).closest<HTMLElement>("[data-boring]");if(button)loadBoring(Number(button.dataset.boring));});
       document.querySelector("#pdf-boring")!.addEventListener("click", generatePdf);
       document.querySelector("#export-geo5")!.addEventListener("click", () => { const data=new FormData(form); const header=["borehole_id","x","y","elevation_m","depth_from_m","depth_to_m","description","uscs","sample","spt_n1","spt_n2","spt_n3","spt_n","moisture_pct","unit_weight_kn_m3","cohesion_kpa","friction_deg","permeability_m_s","young_modulus_mpa"]; const rows=layers.map((layer)=>[data.get("boringId"),data.get("coordE"),data.get("coordN"),data.get("elevation"),layer.from,layer.to,layer.description,layer.uscs,layer.sample,layer.n1,layer.n2,layer.n3,layer.n2+layer.n3,layer.moisture,layer.gamma,layer.cohesion,layer.friction,layer.permeability,layer.modulus].map(csvCell).join(",")); downloadFile(`geo5-${data.get("boringId")}.csv`,[header.join(","),...rows].join("\r\n"),"text/csv;charset=utf-8"); });
       document.querySelector("#export-geostudio")!.addEventListener("click", () => { const header="depth_m,spt_n,moisture_pct,unit_weight_kn_m3,cohesion_kpa,friction_deg,permeability_m_s,young_modulus_mpa"; const rows=layers.flatMap((layer)=>[[layer.from,layer.n2+layer.n3,layer.moisture,layer.gamma,layer.cohesion,layer.friction,layer.permeability,layer.modulus],[layer.to,layer.n2+layer.n3,layer.moisture,layer.gamma,layer.cohesion,layer.friction,layer.permeability,layer.modulus]]).map((row)=>row.join(",")); downloadFile("geostudio-material-functions.csv",[header,...rows].join("\r\n"),"text/csv;charset=utf-8"); });
@@ -348,8 +387,10 @@ import "../styles/global.css";
       document.querySelector("#export-project")!.addEventListener("click", () => downloadFile("proyecto-geotecnico.json",JSON.stringify(projectPayload(),null,2),"application/json"));
       document.querySelector<HTMLInputElement>("#import-project")!.addEventListener("change", async (event) => { const file=(event.target as HTMLInputElement).files?.[0]; if(!file)return; try{const payload=JSON.parse(await file.text()); if(payload.schema!=="codenormative.geotech.v1"||!Array.isArray(payload.layers))throw new Error("Formato incompatible"); Object.entries(payload.form||{}).forEach(([key,value])=>{const field=form.elements.namedItem(key) as HTMLInputElement|HTMLSelectElement|null;if(!field)return;if(field.type==="checkbox")(field as HTMLInputElement).checked=value==="on";else field.value=String(value);}); layers=payload.layers;renderLayers();update();}catch{alert("No se pudo importar el proyecto. Verifique que sea un respaldo CodeNormative válido.");} });
       const saved = localStorage.getItem("codenormative-boring");
-      if (saved) { try { const payload = JSON.parse(saved); Object.entries(payload.form || {}).forEach(([key, value]) => { const field = form.elements.namedItem(key) as HTMLInputElement | HTMLSelectElement | null; if (!field) return; if (field.type === "checkbox") (field as HTMLInputElement).checked = value === "on"; else field.value = String(value); }); if (Array.isArray(payload.layers) && payload.layers.length) layers = payload.layers; } catch {} }
+      if (saved) { try { const payload = JSON.parse(saved); Object.entries(payload.form || {}).forEach(([key, value]) => { const field = form.elements.namedItem(key) as HTMLInputElement | HTMLSelectElement | null; if (!field) return; if (field.type === "checkbox") (field as HTMLInputElement).checked = value === "on"; else field.value = String(value); }); if (Array.isArray(payload.boreholes) && payload.boreholes.length) { boreholes=payload.boreholes; activeBoring=Math.min(Number(payload.activeBoring)||0,boreholes.length-1); layers=structuredClone(boreholes[activeBoring].layers); } else if (Array.isArray(payload.layers) && payload.layers.length) layers = payload.layers; } catch {} }
+      if (!boreholes.length) boreholes=[captureBoring()];
       renderLayers();
+      renderBoreholeProject();
       update();
     </script>
   </body>

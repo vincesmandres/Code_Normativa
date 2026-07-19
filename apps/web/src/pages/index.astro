@@ -38,6 +38,7 @@ import {
 
         <nav class="module-nav" aria-label="Modulos de CodeNormative">
           <a href="/" class="active"><span>01</span> Espectro NEC</a>
+          <a href="/reporte"><span>04</span> Reporte integral</a>
           <a href="/revision-estructural"><span>02</span> Revision estructural</a>
           <a href="/estudio-suelos"><span>03</span> Estudio de suelos</a>
         </nav>
@@ -162,6 +163,7 @@ import {
     <script>
       import { calculateSpectrum } from "../lib/nec-engine";
       import type { SpectrumInput, SpectrumPoint, SpectrumResult } from "../lib/nec-engine";
+      import { saveModule } from "../lib/project-store";
 
       function requireElement<T extends Element>(selector: string): T {
         const element = document.querySelector<T>(selector);
@@ -279,7 +281,8 @@ import {
 
       function updateResult(): void {
         try {
-          currentResult = calculateSpectrum(readInput());
+        currentResult = calculateSpectrum(readInput());
+        saveModule("spectrum", currentResult.input as unknown as Record<string, unknown>, { z: currentResult.z, eta: currentResult.eta, fa: currentResult.fa, fd: currentResult.fd, fs: currentResult.fs, t0: currentResult.t0, tc: currentResult.tc, tl: currentResult.tl, peakSa: Math.max(...currentResult.points.map((point) => point.sa)), peakSi: Math.max(...currentResult.points.map((point) => point.si)) });
           setText("#metric-z", `${fmt(currentResult.z, 2)}g`);
           setText("#metric-eta", fmt(currentResult.eta, 2));
           setText("#metric-soil", `${fmt(currentResult.fa, 2)} / ${fmt(currentResult.fd, 2)} / ${fmt(currentResult.fs, 2)}`);

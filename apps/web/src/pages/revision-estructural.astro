@@ -25,6 +25,7 @@ import { importanceFactors, regions, rFactors, seismicZones, soilTypes } from ".
           <a href="/"><span>01</span> Espectro NEC</a>
           <a href="/revision-estructural" class="active"><span>02</span> Revision estructural</a>
           <a href="/estudio-suelos"><span>03</span> Estudio de suelos</a>
+          <a href="/reporte"><span>04</span> Reporte integral</a>
         </nav>
         <form id="review-form" class="form-grid review-form">
           <label>Sistema estructural
@@ -118,6 +119,7 @@ import { importanceFactors, regions, rFactors, seismicZones, soilTypes } from ".
     <script>
       import { calculateSpectrum } from "../lib/nec-engine";
       import type { Region, SeismicZone, SoilType } from "../lib/nec-engine";
+      import { saveModule } from "../lib/project-store";
 
       const form = document.querySelector<HTMLFormElement>("#review-form")!;
       const systems = {
@@ -184,6 +186,7 @@ import { importanceFactors, regions, rFactors, seismicZones, soilTypes } from ".
         set("#result-category", category(floors, columnLoad));
         const failed = results.filter((item) => item.state === "fail").length;
         const warned = results.filter((item) => item.state === "warn").length;
+        saveModule("structural", Object.fromEntries(data) as Record<string, unknown>, { period, spectralAcceleration: point.sa, baseShear: shear, coefficient, drift, category: category(floors, columnLoad), passed: results.length - failed - warned, failed, warned });
         set("#finding-summary", `${results.length - failed - warned} conformes · ${failed} observaciones · ${warned} por confirmar`);
         const status = document.querySelector("#review-status")!;
         status.textContent = failed ? "Requiere revision" : warned ? "Condicionado" : "Pre-revision conforme";
