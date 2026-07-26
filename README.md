@@ -127,6 +127,9 @@ Incluye:
 - Descarga de CSV.
 - Descarga de archivo `.txt` para ETABS.
 - Build estatico listo para Vercel.
+- Proyecto geotecnico multisondeo con validacion de estratos y vista 3D conceptual.
+- Expediente integral de espectro, comprobaciones y geotecnia con exportacion PDF.
+- Contrato preparado para interpretacion asistida, separado de los calculos deterministas.
 
 Ejecutar el MVP:
 

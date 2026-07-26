@@ -470,6 +470,22 @@ td:first-child {
 .boring-observations { padding: 14px 18px 18px; border-top: 1px solid var(--line); }
 .boring-observations label { color: var(--ink); }
 .boring-observations textarea { width: 100%; resize: vertical; font: inherit; }
+.site-model-grid { display:grid; grid-template-columns:260px minmax(0,1fr); min-height:440px; }
+.site-model-grid aside { padding:18px; border-right:1px solid var(--line); }
+.boring-list { display:grid; gap:8px; margin-top:14px; }
+.boring-chip { display:grid; gap:3px; width:100%; padding:10px; text-align:left; background:#eef0ea; color:var(--ink); border:1px solid var(--line); }
+.boring-chip.active { border-color:var(--accent); box-shadow:inset 4px 0 var(--accent); }
+.boring-chip span,.model-validation { color:var(--muted); font-size:.7rem; }
+.site-model { min-height:440px; padding:18px; overflow:hidden; background:linear-gradient(150deg,#f9faf7,#e3e8e0); }
+.site-model svg { width:100%; height:100%; filter:drop-shadow(0 15px 15px rgba(30,45,35,.12)); }
+.report-workspace { max-width:1300px; }
+.report-modules { display:grid; gap:20px; }
+.report-values { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); }
+.report-values article { min-height:105px; padding:18px; border-right:1px solid var(--line); border-bottom:1px solid var(--line); display:grid; align-content:space-between; }
+.report-values span { color:var(--muted); font-size:.76rem; }
+.report-values strong { font-size:1.2rem; }
+.report-card.missing>p,.assistant-contract { padding:20px; color:var(--muted); }
+.assistant-contract code { display:block; padding:12px; background:#26352b; color:#dff0e4; }
 
 @media (max-width: 980px) {
   .sidebar {
@@ -524,7 +540,7 @@ td:first-child {
   .review-metrics article, .document-grid a { border-right: 0; border-bottom: 1px solid var(--line); }
   .capacity-numbers, .soil-flags, .report-checklist { grid-template-columns: 1fr; }
   .soil-flags label, .report-checklist label, .report-checklist a { border-right: 0; }
-  .boring-base-grid, .boring-editor { grid-template-columns: 1fr; }
+  .boring-base-grid, .boring-editor, .site-model-grid { grid-template-columns: 1fr; }
   .bore-profile { min-height: 360px; border-right: 0; border-bottom: 1px solid var(--line); }
   .boring-log-bar .actions { margin-left: 0; flex-wrap: wrap; }
 }
