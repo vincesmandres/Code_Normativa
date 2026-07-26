@@ -71,15 +71,15 @@ import "../styles/global.css";
         <header class="topbar"><div><p class="eyebrow">NEC-15 / NEC-SE-GC</p><h1>Reportes geotecnicos</h1></div><div class="status-pill" id="soil-status">Por evaluar</div></header>
         <p class="review-notice">Predimensionamiento y control de completitud. La clasificación final del perfil, los parámetros resistentes y las recomendaciones de cimentación corresponden al ingeniero geotécnico responsable.</p>
 
-        <section class="result-window boring-data-panel">
+        <section class="result-window boring-data-panel" data-collapsible>
           <div class="window-bar"><span class="window-index">01</span><div><h2>Datos base de la perforacion</h2><p>Identificacion, localizacion y condiciones de ejecución</p></div></div>
           <div class="boring-base-grid">
             <label>Proyecto<input name="projectName" form="soil-form" value="Edificio residencial" /></label>
             <label>Cliente<input name="client" form="soil-form" value="Propietario" /></label>
             <label>Ubicacion<input name="location" form="soil-form" placeholder="Ciudad, parroquia, direccion" /></label>
             <label>Perforacion<input name="boringId" form="soil-form" value="S-01" /></label>
-            <label>Coordenada Este<input name="coordE" form="soil-form" placeholder="m E" /></label>
-            <label>Coordenada Norte<input name="coordN" form="soil-form" placeholder="m N" /></label>
+            <label>Coordenada Este *<input name="coordE" form="soil-form" type="number" step="0.001" placeholder="m E" required /></label>
+            <label>Coordenada Norte *<input name="coordN" form="soil-form" type="number" step="0.001" placeholder="m N" required /></label>
             <label>Cota terreno (m)<input name="elevation" form="soil-form" type="number" step="0.01" value="0" /></label>
             <label>Fecha<input name="boringDate" form="soil-form" type="date" /></label>
             <label>Metodo<select name="method" form="soil-form"><option>SPT con perforacion a percusion</option><option>Rotacion con recuperacion de nucleo</option><option>CPT / CPTu</option><option>Calicata</option></select></label>
@@ -89,7 +89,7 @@ import "../styles/global.css";
           </div>
         </section>
 
-        <section class="result-window boring-log-panel">
+        <section class="result-window boring-log-panel" data-collapsible>
           <div class="window-bar boring-log-bar"><span class="window-index">02</span><div><h2>Registro estratigrafico y SPT</h2><p>N-SPT = segundo tramo + tercer tramo de penetracion</p></div><div class="actions"><button type="button" id="add-layer" class="secondary">+ Estrato</button><button type="button" id="save-boring" class="secondary">Guardar</button><button type="button" id="pdf-boring">Descargar PDF</button></div></div>
           <div class="integration-bar" aria-label="Interoperabilidad geotecnica">
             <div><strong>Interoperabilidad</strong><span>Formatos abiertos para continuar el modelo en software especializado.</span></div>
@@ -111,9 +111,11 @@ import "../styles/global.css";
           <div class="boring-observations"><label>Observaciones de campo<textarea name="fieldNotes" form="soil-form" rows="3" placeholder="Perdida de circulacion, rechazo, cambios de color, olor, cementacion, nivel de agua..."></textarea></label></div>
         </section>
 
-        <section class="result-window site-model-panel">
+        <section class="result-window site-model-panel" data-collapsible>
           <div class="window-bar boring-log-bar"><span class="window-index">03</span><div><h2>Proyecto multisondeo y modelo 3D</h2><p>Correlacion espacial conceptual; requiere validacion del geotecnico responsable</p></div><div class="actions"><button type="button" id="new-boring" class="secondary">+ Nuevo sondeo</button></div></div>
           <div class="site-model-grid"><aside><strong>Sondeos del proyecto</strong><div id="boring-list" class="boring-list"></div><p id="model-validation" class="model-validation"></p></aside><div id="site-model" class="site-model" role="img" aria-label="Modelo tridimensional conceptual del subsuelo"></div></div>
+          <div class="profile-tools"><strong>Perfil 2D</strong><label>Desde<select id="profile-start"></select></label><label>Hasta<select id="profile-end"></select></label><button type="button" id="build-profile" class="secondary">Generar perfil</button></div>
+          <div id="profile-2d" class="profile-2d" role="img" aria-label="Perfil geotecnico 2D entre sondeos"></div>
         </section>
 
         <section class="result-window">
@@ -165,7 +167,7 @@ import "../styles/global.css";
     <script>
       import { jsPDF } from "jspdf";
       import type { Borehole } from "../lib/geotech-engine";
-      import { validateBorehole } from "../lib/geotech-engine";
+      import { correlateLayer, validateBorehole } from "../lib/geotech-engine";
       import { saveModule } from "../lib/project-store";
       const form = document.querySelector<HTMLFormElement>("#soil-form")!;
       const layerRows = document.querySelector<HTMLTableSectionElement>("#layer-rows")!;
@@ -173,6 +175,24 @@ import "../styles/global.css";
       const n = (data: FormData, key: string) => Number(data.get(key));
       const s = (data: FormData, key: string) => String(data.get(key));
       const set = (selector: string, value: string) => { const node = document.querySelector(selector); if (node) node.textContent = value; };
+
+      document.querySelectorAll<HTMLElement>("[data-collapsible]").forEach((panel) => {
+        const header = panel.querySelector<HTMLElement>(":scope > .window-bar");
+        if (!header) return;
+        const content = Array.from(panel.children).filter((child) => child !== header) as HTMLElement[];
+        const toggle = document.createElement("button");
+        toggle.type = "button";
+        toggle.className = "collapse-toggle";
+        toggle.setAttribute("aria-expanded", "true");
+        toggle.textContent = "Contraer ⌃";
+        header.append(toggle);
+        toggle.addEventListener("click", () => {
+          const expanded = toggle.getAttribute("aria-expanded") === "true";
+          toggle.setAttribute("aria-expanded", String(!expanded));
+          toggle.textContent = expanded ? "Expandir ⌄" : "Contraer ⌃";
+          content.forEach((node) => { node.hidden = expanded; });
+        });
+      });
 
       const categories = [
         { name: "Baja", borings: 3, depth: 6 },
@@ -191,34 +211,87 @@ import "../styles/global.css";
       let boreholes: Borehole[] = [];
       let activeBoring = 0;
 
+      const coordinate = (data: FormData, key: string): number | null => {
+        const raw = String(data.get(key) ?? "").trim();
+        if (!raw) return null;
+        const value = Number(raw);
+        return Number.isFinite(value) ? value : null;
+      };
+
+      const resolvedLayer = (layer: Layer): Layer => {
+        const reference = correlateLayer(layer);
+        return { ...layer, gamma: layer.gamma > 0 ? layer.gamma : reference.gamma, cohesion: layer.cohesion > 0 ? layer.cohesion : reference.cohesion, friction: layer.friction > 0 ? layer.friction : reference.friction, permeability: layer.permeability > 0 ? layer.permeability : reference.permeability, modulus: layer.modulus > 0 ? layer.modulus : reference.modulus };
+      };
+
       function captureBoring(): Borehole {
         const data = new FormData(form);
-        return { id: String(data.get("boringId") || `S-${String(activeBoring + 1).padStart(2,"0")}`), x: Number(data.get("coordE")) || 0, y: Number(data.get("coordN")) || 0, elevation: Number(data.get("elevation")) || 0, finalDepth: Number(data.get("boringFinalDepth")) || 1, waterDepth: data.get("waterDepth") ? Number(data.get("waterDepth")) : null, layers: structuredClone(layers) };
+        return { id: String(data.get("boringId") || `S-${String(activeBoring + 1).padStart(2,"0")}`), x: coordinate(data, "coordE"), y: coordinate(data, "coordN"), elevation: Number(data.get("elevation")) || 0, finalDepth: Number(data.get("boringFinalDepth")) || 1, waterDepth: data.get("waterDepth") ? Number(data.get("waterDepth")) : null, layers: layers.map(resolvedLayer) };
       }
 
       function syncActiveBoring() { boreholes[activeBoring] = captureBoring(); }
 
+      function projectErrors(): string[] {
+        const errors = boreholes.flatMap(validateBorehole);
+        const coordinates = new Map<string, string>();
+        boreholes.forEach((borehole) => {
+          if (borehole.x === null || borehole.y === null) return;
+          const key = `${borehole.x.toFixed(3)}:${borehole.y.toFixed(3)}`;
+          const previous = coordinates.get(key);
+          if (previous) errors.push(`${borehole.id}: comparte coordenadas con ${previous}.`);
+          else coordinates.set(key, borehole.id);
+        });
+        return errors;
+      }
+
       function loadBoring(index: number) {
         syncActiveBoring(); activeBoring = index; const borehole = boreholes[index]; layers = structuredClone(borehole.layers);
-        const values: Record<string, string|number> = { boringId: borehole.id, coordE: borehole.x, coordN: borehole.y, elevation: borehole.elevation, boringFinalDepth: borehole.finalDepth, waterDepth: borehole.waterDepth ?? "" };
-        Object.entries(values).forEach(([key,value]) => { const field=form.elements.namedItem(key) as HTMLInputElement|null; if(field) field.value=String(value); });
+        const values: Record<string, string|number|null> = { boringId: borehole.id, coordE: borehole.x, coordN: borehole.y, elevation: borehole.elevation, boringFinalDepth: borehole.finalDepth, waterDepth: borehole.waterDepth ?? "" };
+        Object.entries(values).forEach(([key,value]) => { const field=form.elements.namedItem(key) as HTMLInputElement|null; if(field) field.value=value === null ? "" : String(value); });
         renderLayers(); renderBoreholeProject(); update();
       }
 
       function renderBoreholeProject() {
         syncActiveBoring();
         const list = document.querySelector("#boring-list")!;
-        list.innerHTML = boreholes.map((borehole,index)=>`<button type="button" class="boring-chip ${index===activeBoring?"active":""}" data-boring="${index}"><strong>${escapeHtml(borehole.id)}</strong><span>E ${borehole.x.toFixed(1)} / N ${borehole.y.toFixed(1)} / ${borehole.finalDepth.toFixed(1)} m</span></button>`).join("");
-        const allErrors=boreholes.flatMap(validateBorehole); set("#model-validation", allErrors.length ? `${allErrors.length} observaciones de consistencia: ${allErrors[0]}` : `${boreholes.length} sondeo(s) consistentes para correlacion conceptual.`);
+        list.innerHTML = boreholes.map((borehole,index)=>`<button type="button" class="boring-chip ${index===activeBoring?"active":""}" data-boring="${index}"><strong>${escapeHtml(borehole.id)}</strong><span>E ${borehole.x === null ? "pendiente" : borehole.x.toFixed(1)} / N ${borehole.y === null ? "pendiente" : borehole.y.toFixed(1)} / ${borehole.finalDepth.toFixed(1)} m</span></button>`).join("");
+        const allErrors=projectErrors(); set("#model-validation", allErrors.length ? `${allErrors.length} observaciones de consistencia: ${allErrors[0]}` : `${boreholes.length} sondeo(s) consistentes para correlacion conceptual.`);
+        const selectors = ["#profile-start", "#profile-end"].map((selector) => document.querySelector<HTMLSelectElement>(selector));
+        selectors.forEach((select) => { if (select) select.innerHTML = boreholes.map((borehole, index) => `<option value="${index}">${escapeHtml(borehole.id)}${borehole.x === null || borehole.y === null ? " · coordenadas pendientes" : ""}</option>`).join(""); });
+        if (selectors[1] && boreholes.length > 1) selectors[1].value = "1";
         const palette=["#c9ad79","#9fae9b","#82958a","#98896c","#a4a0b3"];
-        const minX=Math.min(...boreholes.map(b=>b.x)), minY=Math.min(...boreholes.map(b=>b.y));
-        document.querySelector("#site-model")!.innerHTML=`<svg viewBox="0 0 760 420" aria-hidden="true"><defs><linearGradient id="ground" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#eef1eb"/><stop offset="1" stop-color="#d7ddd3"/></linearGradient></defs><path d="M80 90 L430 40 L690 135 L335 190 Z" fill="url(#ground)" stroke="#758174"/>${boreholes.map((b)=>{const x=170+(b.x-minX)*.35+(b.y-minY)*.18;const y=115-(b.y-minY)*.12;const scale=240/Math.max(...boreholes.map(q=>q.finalDepth),1);return `<g><text x="${x-15}" y="${y-10}" font-size="13" font-weight="700">${escapeHtml(b.id)}</text>${b.layers.map((l,li)=>`<path d="M${x} ${y+l.from*scale} l42 -6 v${Math.max((l.to-l.from)*scale,4)} l-42 6 z" fill="${palette[li%palette.length]}" stroke="#59635a"><title>${escapeHtml(l.uscs)} ${escapeHtml(l.description)}</title></path>`).join("")}<line x1="${x}" y1="${y}" x2="${x}" y2="${y+b.finalDepth*scale}" stroke="#26352b"/></g>`}).join("")}</svg>`;
+        const minX=Math.min(...boreholes.map(b=>b.x ?? 0)), minY=Math.min(...boreholes.map(b=>b.y ?? 0));
+        document.querySelector("#site-model")!.innerHTML=`<svg viewBox="0 0 760 420" aria-hidden="true"><defs><linearGradient id="ground" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#eef1eb"/><stop offset="1" stop-color="#d7ddd3"/></linearGradient></defs><path d="M80 90 L430 40 L690 135 L335 190 Z" fill="url(#ground)" stroke="#758174"/>${boreholes.map((b)=>{const bx=b.x ?? 0;const by=b.y ?? 0;const x=170+(bx-minX)*.35+(by-minY)*.18;const y=115-(by-minY)*.12;const scale=240/Math.max(...boreholes.map(q=>q.finalDepth),1);return `<g><text x="${x-15}" y="${y-10}" font-size="13" font-weight="700">${escapeHtml(b.id)}</text>${b.layers.map((l,li)=>`<path d="M${x} ${y+l.from*scale} l42 -6 v${Math.max((l.to-l.from)*scale,4)} l-42 6 z" fill="${palette[li%palette.length]}" stroke="#59635a"><title>${escapeHtml(l.uscs)} ${escapeHtml(l.description)}</title></path>`).join("")}<line x1="${x}" y1="${y}" x2="${x}" y2="${y+b.finalDepth*scale}" stroke="#26352b"/></g>`}).join("")}</svg>`;
+      }
+
+      function renderProfile2D() {
+        const start = Number(document.querySelector<HTMLSelectElement>("#profile-start")?.value);
+        const end = Number(document.querySelector<HTMLSelectElement>("#profile-end")?.value);
+        const target = document.querySelector<HTMLElement>("#profile-2d");
+        const first = boreholes[start];
+        const second = boreholes[end];
+        if (!target || !first || !second || first === second || first.x === null || first.y === null || second.x === null || second.y === null) {
+          if (target) target.innerHTML = "";
+          return;
+        }
+        const distance = Math.hypot(second.x - first.x, second.y - first.y);
+        const width = 900;
+        const height = 300;
+        const left = 70;
+        const right = 30;
+        const top = 35;
+        const bottom = 35;
+        const maxDepth = Math.max(first.finalDepth, second.finalDepth, 1);
+        const xAt = (value: number) => left + value / Math.max(distance, 1) * (width - left - right);
+        const yAt = (value: number) => top + value / maxDepth * (height - top - bottom);
+        const layerRectangles = (borehole: Borehole, x: number) => borehole.layers.map((layer) => `<rect x="${x - 28}" y="${yAt(layer.from)}" width="56" height="${Math.max(yAt(layer.to) - yAt(layer.from), 3)}" fill="${colors[layer.uscs] || "#aaa"}" stroke="#59635a"><title>${escapeHtml(layer.uscs)} · ${escapeHtml(layer.description)}</title></rect><text x="${x - 22}" y="${yAt((layer.from + layer.to) / 2) + 3}" font-size="9">${escapeHtml(layer.uscs)}</text>`).join("");
+        const connectors = first.layers.map((layer, index) => { const other = second.layers[index]; if (!other) return ""; return `<path d="M${xAt(0) + 28} ${yAt(layer.from)} L${xAt(distance) - 28} ${yAt(other.from)} L${xAt(distance) - 28} ${yAt(other.to)} L${xAt(0) + 28} ${yAt(layer.to)} Z" fill="${colors[layer.uscs] || "#aaa"}" opacity=".18" stroke="#59635a" stroke-dasharray="4 4"/>`; }).join("");
+        target.innerHTML = `<svg viewBox="0 0 ${width} ${height}" aria-hidden="true"><rect x="${left}" y="${top}" width="${width - left - right}" height="${height - top - bottom}" fill="#f3f4ef" stroke="#758174"/>${connectors}${layerRectangles(first, xAt(0))}${layerRectangles(second, xAt(distance))}<line x1="${left}" x2="${width - right}" y1="${height - bottom}" y2="${height - bottom}" stroke="#26352b"/><text x="${xAt(0)}" y="20" text-anchor="middle" font-weight="700">${escapeHtml(first.id)}</text><text x="${xAt(distance)}" y="20" text-anchor="middle" font-weight="700">${escapeHtml(second.id)}</text><text x="${width / 2}" y="${height - 8}" text-anchor="middle" font-size="10">Distancia proyectada: ${distance.toFixed(2)} m · Profundidad (m)</text></svg>`;
       }
 
       const escapeHtml = (value: unknown) => String(value ?? "").replace(/[&<>'"]/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;" })[char]!);
 
       function renderLayers() {
-        layerRows.innerHTML = layers.map((layer, index) => `<tr data-index="${index}">
+        layerRows.innerHTML = layers.map((layer, index) => { const reference = correlateLayer(layer); const gamma = layer.gamma > 0 ? layer.gamma : reference.gamma; const cohesion = layer.cohesion > 0 ? layer.cohesion : reference.cohesion; const friction = layer.friction > 0 ? layer.friction : reference.friction; const permeability = layer.permeability > 0 ? layer.permeability : reference.permeability; const modulus = layer.modulus > 0 ? layer.modulus : reference.modulus; return `<tr data-index="${index}">
           <td><input data-key="from" type="number" min="0" step="0.1" value="${layer.from}"></td>
           <td><input data-key="to" type="number" min="0" step="0.1" value="${layer.to}"></td>
           <td><input data-key="description" value="${escapeHtml(layer.description)}"></td>
@@ -229,13 +302,13 @@ import "../styles/global.css";
           <td><input data-key="n3" type="number" min="0" value="${layer.n3}"></td>
           <td class="n-value">${layer.n2 + layer.n3}</td>
           <td><input data-key="moisture" type="number" min="0" step="0.1" value="${layer.moisture}"></td>
-          <td><input data-key="gamma" type="number" min="0" step="0.1" value="${layer.gamma}"></td>
-          <td><input data-key="cohesion" type="number" min="0" step="0.1" value="${layer.cohesion}"></td>
-          <td><input data-key="friction" type="number" min="0" step="0.1" value="${layer.friction}"></td>
-          <td><input data-key="permeability" type="number" min="0" step="0.00000001" value="${layer.permeability}"></td>
-          <td><input data-key="modulus" type="number" min="0" step="0.1" value="${layer.modulus}"></td>
+          <td><input data-key="gamma" type="number" min="0" step="0.1" value="${gamma}" title="${layer.gamma > 0 ? "Dato ingresado" : reference.source}"></td>
+          <td><input data-key="cohesion" type="number" min="0" step="0.1" value="${cohesion}" title="${layer.cohesion > 0 ? "Dato ingresado" : reference.source}"></td>
+          <td><input data-key="friction" type="number" min="0" step="0.1" value="${friction}" title="${layer.friction > 0 ? "Dato ingresado" : reference.source}"></td>
+          <td><input data-key="permeability" type="number" min="0" step="0.00000001" value="${permeability}" title="${layer.permeability > 0 ? "Dato ingresado" : reference.source}"></td>
+          <td><input data-key="modulus" type="number" min="0" step="0.1" value="${modulus}" title="${layer.modulus > 0 ? "Dato ingresado" : reference.source}"></td>
           <td><button type="button" class="remove-layer" aria-label="Eliminar estrato">×</button></td>
-        </tr>`).join("");
+        </tr>`; }).join("");
         renderProfile();
       }
 
@@ -257,7 +330,7 @@ import "../styles/global.css";
 
       const csvCell = (value: unknown) => `"${String(value ?? "").replaceAll('"', '""')}"`;
       function downloadFile(name: string, content: string, type: string) { const url = URL.createObjectURL(new Blob([content], { type })); const link = document.createElement("a"); link.href = url; link.download = name; link.click(); setTimeout(() => URL.revokeObjectURL(url), 1000); }
-      function projectPayload() { return { schema: "codenormative.geotech.v1", exportedAt: new Date().toISOString(), form: Object.fromEntries(new FormData(form)), layers }; }
+      function projectPayload() { return { schema: "codenormative.geotech.v1", exportedAt: new Date().toISOString(), form: Object.fromEntries(new FormData(form)), layers: layers.map(resolvedLayer), boreholes }; }
 
       function generatePdf() {
         const data = new FormData(form);
@@ -365,7 +438,7 @@ import "../styles/global.css";
           return `<article class="finding ${state}"><span class="finding-mark">${mark}</span><div><strong>${item.title}</strong><p>${item.detail}</p><small>${item.ref}</small></div></article>`;
         }).join("");
         syncActiveBoring();
-        saveModule("geotech", Object.fromEntries(data) as Record<string, unknown>, { category: category.name, requiredBorings: category.borings, requiredDepth, profile: soilProfile.name, appliedPressure: qApplied, allowableCapacity: qAllowable, utilization, settlementOk, boreholeCount: boreholes.length, validationErrors: boreholes.flatMap(validateBorehole).length });
+        saveModule("geotech", Object.fromEntries(data) as Record<string, unknown>, { category: category.name, requiredBorings: category.borings, requiredDepth, profile: soilProfile.name, appliedPressure: qApplied, allowableCapacity: qAllowable, utilization, settlementOk, boreholeCount: boreholes.length, validationErrors: projectErrors().length });
       }
 
       form.addEventListener("submit", (event) => { event.preventDefault(); update(); });
@@ -376,8 +449,28 @@ import "../styles/global.css";
       layerRows.addEventListener("click", (event) => { const button = (event.target as Element).closest(".remove-layer"); if (!button) return; const row = button.closest<HTMLTableRowElement>("tr[data-index]")!; if (layers.length > 1) layers.splice(Number(row.dataset.index), 1); renderLayers(); });
       document.querySelector("#add-layer")!.addEventListener("click", () => { const from = layers.at(-1)?.to ?? 0; layers.push({ from, to: from + 1.5, description: "Nuevo estrato", uscs: "CL", sample: `M-${String(layers.length + 1).padStart(2,"0")}`, n1: 0, n2: 0, n3: 0, moisture: 0, gamma: 18, cohesion: 0, friction: 28, permeability: 1e-7, modulus: 10 }); renderLayers(); });
       document.querySelector("#save-boring")!.addEventListener("click", () => { syncActiveBoring(); const payload = { schema: "codenormative.geotech.v2", form: Object.fromEntries(new FormData(form)), boreholes, activeBoring }; localStorage.setItem("codenormative-boring", JSON.stringify(payload)); renderBoreholeProject(); const button = document.querySelector<HTMLButtonElement>("#save-boring")!; button.textContent = "Proyecto guardado"; setTimeout(() => button.textContent = "Guardar", 1600); });
-      document.querySelector("#new-boring")!.addEventListener("click", () => { syncActiveBoring(); const next=boreholes.length+1; const copy=structuredClone(boreholes[activeBoring]); copy.id=`S-${String(next).padStart(2,"0")}`; copy.x+=10; copy.y+=10; boreholes.push(copy); loadBoring(boreholes.length-1); });
+      const createNewBoring = () => {
+        syncActiveBoring();
+        const next = boreholes.length + 1;
+        const blank: Borehole = { id: `S-${String(next).padStart(2, "0")}`, x: null, y: null, elevation: 0, finalDepth: 6, waterDepth: null, layers: [{ from: 0, to: 1.5, description: "Nuevo estrato", uscs: "CL", sample: `M-${String(next).padStart(2, "0")}`, n1: 0, n2: 0, n3: 0, moisture: 0, gamma: 18, cohesion: 0, friction: 28, permeability: 1e-7, modulus: 10 }] };
+        boreholes.push(blank);
+        loadBoring(boreholes.length - 1);
+        (form.elements.namedItem("coordE") as HTMLInputElement | null)?.focus();
+      };
+      document.querySelector("#new-boring")?.addEventListener("click", createNewBoring);
+      const logActions = document.querySelector<HTMLElement>(".boring-log-panel .boring-log-bar .actions");
+      if (logActions) {
+        const addBoringButton = document.createElement("button");
+        addBoringButton.type = "button";
+        addBoringButton.className = "secondary add-boring-action";
+        addBoringButton.textContent = "+ Nuevo sondeo";
+        addBoringButton.addEventListener("click", createNewBoring);
+        logActions.prepend(addBoringButton);
+      }
       document.querySelector("#boring-list")!.addEventListener("click",(event)=>{const button=(event.target as Element).closest<HTMLElement>("[data-boring]");if(button)loadBoring(Number(button.dataset.boring));});
+      document.querySelector("#build-profile")!.addEventListener("click", renderProfile2D);
+      document.querySelector("#profile-start")!.addEventListener("change", renderProfile2D);
+      document.querySelector("#profile-end")!.addEventListener("change", renderProfile2D);
       document.querySelector("#pdf-boring")!.addEventListener("click", generatePdf);
       document.querySelector("#export-geo5")!.addEventListener("click", () => { const data=new FormData(form); const header=["borehole_id","x","y","elevation_m","depth_from_m","depth_to_m","description","uscs","sample","spt_n1","spt_n2","spt_n3","spt_n","moisture_pct","unit_weight_kn_m3","cohesion_kpa","friction_deg","permeability_m_s","young_modulus_mpa"]; const rows=layers.map((layer)=>[data.get("boringId"),data.get("coordE"),data.get("coordN"),data.get("elevation"),layer.from,layer.to,layer.description,layer.uscs,layer.sample,layer.n1,layer.n2,layer.n3,layer.n2+layer.n3,layer.moisture,layer.gamma,layer.cohesion,layer.friction,layer.permeability,layer.modulus].map(csvCell).join(",")); downloadFile(`geo5-${data.get("boringId")}.csv`,[header.join(","),...rows].join("\r\n"),"text/csv;charset=utf-8"); });
       document.querySelector("#export-geostudio")!.addEventListener("click", () => { const header="depth_m,spt_n,moisture_pct,unit_weight_kn_m3,cohesion_kpa,friction_deg,permeability_m_s,young_modulus_mpa"; const rows=layers.flatMap((layer)=>[[layer.from,layer.n2+layer.n3,layer.moisture,layer.gamma,layer.cohesion,layer.friction,layer.permeability,layer.modulus],[layer.to,layer.n2+layer.n3,layer.moisture,layer.gamma,layer.cohesion,layer.friction,layer.permeability,layer.modulus]]).map((row)=>row.join(",")); downloadFile("geostudio-material-functions.csv",[header,...rows].join("\r\n"),"text/csv;charset=utf-8"); });

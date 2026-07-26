@@ -264,6 +264,19 @@ h2 {
   color: var(--muted);
   font-size: .88rem;
 }
+.collapse-toggle {
+  margin-left: auto;
+  min-height: 34px;
+  padding: 7px 10px;
+  border: 1px solid var(--line);
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: .72rem;
+  cursor: pointer;
+}
+.collapse-toggle:hover { background: var(--paper); color: var(--ink); }
+.collapsible-content[hidden] { display: none; }
 .status-pill.warning { border-color: #f1d6a5; background: #fff3d8; color: #75530c; }
 .window-index { align-self: stretch; display: grid; place-items: center; width: 34px; border-right: 1px solid var(--line); color: var(--muted); font-size: .78rem; font-weight: 700; }
 .window-bar .legend { margin-left: auto; }
@@ -478,6 +491,12 @@ td:first-child {
 .boring-chip span,.model-validation { color:var(--muted); font-size:.7rem; }
 .site-model { min-height:440px; padding:18px; overflow:hidden; background:linear-gradient(150deg,#f9faf7,#e3e8e0); }
 .site-model svg { width:100%; height:100%; filter:drop-shadow(0 15px 15px rgba(30,45,35,.12)); }
+.profile-tools { display:flex; align-items:end; gap:10px; flex-wrap:wrap; padding:14px 18px; border-top:1px solid var(--line); background:#f1f0eb; }
+.profile-tools strong { margin-right:auto; font-size:.85rem; }
+.profile-tools label { display:grid; gap:4px; color:var(--muted); font-size:.72rem; }
+.profile-tools select { min-width:110px; }
+.profile-2d { min-height:240px; padding:12px 18px 18px; border-top:1px solid var(--line); background:#faf9f5; }
+.profile-2d:empty::before { display:block; padding:52px 12px; color:var(--muted); font-size:.82rem; text-align:center; content:"Seleccione dos sondeos para generar un perfil 2D."; }
 .report-workspace { max-width:1300px; }
 .report-modules { display:grid; gap:20px; }
 .report-values { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); }

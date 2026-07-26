@@ -5,7 +5,7 @@ export type SoilLayer = {
 };
 
 export type Borehole = {
-  id: string; x: number; y: number; elevation: number; finalDepth: number;
+  id: string; x: number | null; y: number | null; elevation: number; finalDepth: number;
   waterDepth: number | null; layers: SoilLayer[];
 };
 
@@ -62,6 +62,8 @@ export function evaluateGeotech(input: GeotechInput) {
 export function validateBorehole(borehole: Borehole): string[] {
   const errors: string[] = [];
   if (!borehole.id.trim()) errors.push("La perforacion requiere identificador.");
+  if (borehole.x === null || !Number.isFinite(borehole.x)) errors.push(`${borehole.id || "Sondeo"}: falta coordenada Este.`);
+  if (borehole.y === null || !Number.isFinite(borehole.y)) errors.push(`${borehole.id || "Sondeo"}: falta coordenada Norte.`);
   if (borehole.finalDepth <= 0) errors.push(`${borehole.id}: profundidad final invalida.`);
   borehole.layers.forEach((layer, index) => {
     if (layer.from < 0 || layer.to <= layer.from) errors.push(`${borehole.id}, estrato ${index + 1}: intervalo invalido.`);
@@ -73,4 +75,17 @@ export function validateBorehole(borehole: Borehole): string[] {
 
 export function materialAtDepth(borehole: Borehole, depth: number) {
   return borehole.layers.find((layer) => depth >= layer.from && depth <= layer.to) ?? null;
+}
+
+export function correlateLayer(layer: Pick<SoilLayer, "uscs" | "n2" | "n3" | "gamma" | "cohesion" | "friction" | "permeability" | "modulus">) {
+  const n = Math.max(0, layer.n2 + layer.n3);
+  const cohesive = ["ML", "CL", "OL", "MH", "CH", "OH", "PT"].includes(layer.uscs);
+  return {
+    gamma: layer.gamma > 0 ? layer.gamma : 16 + Math.min(n, 30) * 0.12,
+    cohesion: layer.cohesion > 0 ? layer.cohesion : cohesive ? Math.max(5, n * 2.5) : 0,
+    friction: layer.friction > 0 ? layer.friction : cohesive ? 22 : Math.min(38, 27 + n * 0.3),
+    permeability: layer.permeability > 0 ? layer.permeability : cohesive ? 1e-8 : 1e-5,
+    modulus: layer.modulus > 0 ? layer.modulus : Math.max(2, n * 2.5),
+    source: "Correlacion referencial a partir de N-SPT y USCS",
+  };
 }
