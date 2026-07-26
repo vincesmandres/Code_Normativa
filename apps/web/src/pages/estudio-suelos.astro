@@ -7,21 +7,19 @@ import "../styles/global.css";
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="Predimensionamiento y control de estudio geotecnico conforme NEC-SE-GC." />
+    <meta name="description" content="Creacion y control de reportes geotecnicos conforme a la NEC-SE-GC." />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Chango&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
-    <title>CodeNormative | Estudio de suelos NEC-15</title>
+    <title>CodeNormative | Reportes geotecnicos</title>
   </head>
   <body>
     <main class="app-shell">
       <aside class="sidebar soil-sidebar" aria-label="Datos geotecnicos">
         <div class="brand"><span class="brand-mark">C/N</span><div><p>CodeNormative</p><span>Geotecnia · NEC-SE-GC</span></div></div>
         <nav class="module-nav" aria-label="Modulos de CodeNormative">
-          <a href="/"><span>01</span> Espectro NEC</a>
-          <a href="/revision-estructural"><span>02</span> Revision estructural</a>
-          <a href="/estudio-suelos" class="active"><span>03</span> Estudio de suelos</a>
-          <a href="/reporte"><span>04</span> Reporte integral</a>
+          <a href="/"><span>01</span> Creador de espectro</a>
+          <a href="/estudio-suelos" class="active"><span>02</span> Reportes geotecnicos</a>
         </nav>
         <form id="soil-form" class="form-grid review-form">
           <div class="numeric-row">
@@ -70,7 +68,7 @@ import "../styles/global.css";
       </aside>
 
       <section class="workspace soil-workspace">
-        <header class="topbar"><div><p class="eyebrow">NEC-15 / NEC-SE-GC</p><h1>Estudio de suelos</h1></div><div class="status-pill" id="soil-status">Por evaluar</div></header>
+        <header class="topbar"><div><p class="eyebrow">NEC-15 / NEC-SE-GC</p><h1>Reportes geotecnicos</h1></div><div class="status-pill" id="soil-status">Por evaluar</div></header>
         <p class="review-notice">Predimensionamiento y control de completitud. La clasificación final del perfil, los parámetros resistentes y las recomendaciones de cimentación corresponden al ingeniero geotécnico responsable.</p>
 
         <section class="result-window boring-data-panel">
